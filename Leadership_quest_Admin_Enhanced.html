@@ -167,12 +167,6 @@
           </div>
 
           <div class="flex items-center space-x-2 md:hidden">
-            <button onclick="startTutorial()" title="แนะนำการใช้งานระบบ" class="p-2 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs">
-              <i class="fa-solid fa-graduation-cap"></i>
-            </button>
-            <button id="rolePreviewBtnMobile" onclick="toggleRolePreview()" title="สลับ Admin / Learner View" class="hidden p-2 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs">
-              <i class="fa-solid fa-eye"></i>
-            </button>
             <button onclick="toggleQuickDemoModal(true)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-cyan-500/30">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
@@ -214,10 +208,6 @@
         </nav>
 
         <div class="hidden md:flex items-center space-x-3">
-          <button onclick="startTutorial()" title="แนะนำการใช้งานระบบ" class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs transition flex items-center gap-1.5">
-            <i class="fa-solid fa-graduation-cap text-sm"></i><span class="text-[11px] font-semibold">แนะนำการใช้งาน</span>
-          </button>
-
           <div id="userInfo" class="flex items-center space-x-3 text-right cursor-pointer" onclick="openCharacterCustomizer()">
             <div>
               <div id="userName" class="text-sm font-semibold text-slate-200">คุณสมชาย ใจดี</div>
@@ -227,10 +217,6 @@
               <i class="fa-solid fa-user-ninja" id="userAvatarIcon"></i>
             </div>
           </div>
-
-          <button id="rolePreviewBtn" onclick="toggleRolePreview()" class="hidden px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition items-center gap-1.5">
-            <i class="fa-solid fa-eye"></i><span id="rolePreviewLabel">ดูหน้า Learner</span>
-          </button>
 
           <button onclick="toggleQuickDemoModal(true)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700">
             <i class="fa-solid fa-arrows-rotate mr-1"></i>สลับผู้ใช้
@@ -1559,7 +1545,7 @@
       saveData();
     }
 
-    const STATE = { currentUser: null, activeTab: 'dashboard', adminModule: 'setup', previewAdminEmail: null };
+    const STATE = { currentUser: null, activeTab: 'dashboard', adminModule: 'setup' };
     let editingUserId = null, editingGroupId = null, editingProgramId = null, editingBatchId = null, currentTutorialStep = 0;
     let growthChartInstance = null;
     const analyticsChartInstances = {};
@@ -1595,7 +1581,6 @@
 
     function handleLogin(e) {
       e.preventDefault();
-      STATE.previewAdminEmail = null;
       const email = document.getElementById('loginEmail').value.trim();
       const user = DB.users.find(u => u.email.toLowerCase() === email.toLowerCase());
       if (user) loginUser(user, true);
@@ -1603,7 +1588,6 @@
     }
 
     function quickLogin(email) {
-      STATE.previewAdminEmail = null;
       const user = DB.users.find(u => u.email === email);
       if (user) { loginUser(user, true); toggleQuickDemoModal(false); }
     }
@@ -1620,7 +1604,6 @@
 
       document.getElementById('userName').textContent = user.name;
       document.getElementById('userRoleBadge').textContent = user.role === 'admin' ? 'Administrator' : `Learner (${groupNameOf(user)})`;
-      updateRoleSwitchButton();
 
       focusContextOnUser(user);
       renderContextBar();
@@ -1646,7 +1629,6 @@
 
     function logout() {
       STATE.currentUser = null;
-      STATE.previewAdminEmail = null;
       DB.session.email = null;
       saveData();
       document.getElementById('contextBar')?.classList.add('hidden');
@@ -1656,39 +1638,6 @@
       document.getElementById('loginView')?.classList.remove('hidden');
       document.getElementById('loginEmail').value = '';
       showToast('🔒 ออกจากระบบเรียบร้อยแล้ว');
-    }
-
-    function updateRoleSwitchButton() {
-      const button = document.getElementById('rolePreviewBtn');
-      const mobileButton = document.getElementById('rolePreviewBtnMobile');
-      const label = document.getElementById('rolePreviewLabel');
-      if (!button || !mobileButton || !label) return;
-      const canSwitch = STATE.currentUser?.role === 'admin' || !!STATE.previewAdminEmail;
-      button.classList.toggle('hidden', !canSwitch);
-      button.classList.toggle('flex', canSwitch);
-      mobileButton.classList.toggle('hidden', !canSwitch);
-      label.textContent = STATE.previewAdminEmail ? 'กลับหน้า Admin' : 'ดูหน้า Learner';
-      mobileButton.title = STATE.previewAdminEmail ? 'กลับหน้า Admin' : 'ดูหน้า Learner';
-    }
-
-    function toggleRolePreview() {
-      if (STATE.currentUser?.role === 'admin') {
-        const learner = currentLearners()[0];
-        if (!learner) { showToast('⚠️ รุ่นนี้ยังไม่มีผู้เรียนสำหรับ Preview'); return; }
-        STATE.previewAdminEmail = STATE.currentUser.email;
-        loginUser(learner, false);
-        showToast(`👁️ กำลังดูหน้า Learner ในนาม ${learner.name}`);
-        return;
-      }
-
-      if (STATE.previewAdminEmail) {
-        const admin = DB.users.find(u => u.email === STATE.previewAdminEmail && u.role === 'admin');
-        STATE.previewAdminEmail = null;
-        if (admin) {
-          loginUser(admin, false);
-          showToast('🛡️ กลับสู่หน้า Admin แล้ว');
-        }
-      }
     }
 
     /* ============================================================
