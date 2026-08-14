@@ -1,0 +1,8 @@
+{
+  "name": "leadership-quest-admin-portal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build_site.mjs"
+  }
+}
