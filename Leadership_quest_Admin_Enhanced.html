@@ -1090,7 +1090,7 @@
         <!-- SIX INTERACTIVE CHARTS -->
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <article class="glass-card p-6 rounded-2xl space-y-4">
-            <h3 class="text-sm font-bold text-slate-100"><i class="fa-solid fa-chart-column text-cyan-400 mr-2"></i>Pre vs Post Knowledge</h3>
+            <h3 class="text-sm font-bold text-slate-100"><i class="fa-solid fa-chart-column text-cyan-400 mr-2"></i>Pre vs Post Knowledge — ค่าเฉลี่ยทั้ง Cohort</h3>
             <div class="relative h-72"><canvas id="knowledgeComparisonChart"></canvas></div>
           </article>
           <article class="glass-card neon-frame-emerald p-6 rounded-2xl space-y-4">
@@ -2489,13 +2489,15 @@
     }
 
     function initKnowledgeComparisonChart(learners) {
+      const cohortPreAverage = average(learners.map(u => Number(u.preScore || 0)));
+      const cohortPostAverage = average(learners.map(u => Number(u.postScore || 0)));
       replaceAnalyticsChart('knowledge', 'knowledgeComparisonChart', {
         type: 'bar',
         data: {
-          labels: learners.map(u => u.name),
+          labels: ['Cohort Average'],
           datasets: [
-            { label: 'Pre-test', data: learners.map(u => Number(u.preScore || 0)), backgroundColor: 'rgba(6,182,212,0.65)', borderColor: '#22d3ee', borderWidth: 1 },
-            { label: 'Post-test', data: learners.map(u => Number(u.postScore || 0)), backgroundColor: 'rgba(16,185,129,0.65)', borderColor: '#34d399', borderWidth: 1 }
+            { label: 'Pre-test Average', data: [Number(cohortPreAverage.toFixed(2))], backgroundColor: 'rgba(6,182,212,0.65)', borderColor: '#22d3ee', borderWidth: 1 },
+            { label: 'Post-test Average', data: [Number(cohortPostAverage.toFixed(2))], backgroundColor: 'rgba(16,185,129,0.65)', borderColor: '#34d399', borderWidth: 1 }
           ]
         },
         options: cartesianOptions({ scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { beginAtZero: true, max: 10, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(148,163,184,0.10)' } } } })
