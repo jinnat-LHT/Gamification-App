@@ -162,8 +162,8 @@ If an activity is disabled, the related metric/chart is hidden or shown as **N/A
 - Self-Behavior uses a 1–5 scale for the five configured leadership dimensions.
 - Peer Review requires a rating and written feedback for required peers before submission.
 - A learner cannot access or submit a disabled/closed activity.
-- Knowledge Test and Self-Behavior/Peer Review allow one submission per Learner/Batch. Learners may navigate and edit answers before final submit; after submission they cannot edit or resubmit in MVP.
-- Post-test uses the same Batch Snapshot question set for every Learner, while randomizing question order only per Learner. Option order remains A–D as authored. The presented question order is stored with the result for audit; question content is not randomly substituted.
+- Knowledge Test and Self-Behavior/Peer Review allow one final submission per Learner/Batch, except Post-test: a Learner may retest while not yet passed. Post-test requires at least 80%; after passing, the activity is locked and cannot be retaken. Each attempt is retained for audit.
+- Post-test uses the same Batch Snapshot question set for every Learner, while randomizing question order only per Learner. Option order remains A–D as authored. The presented question order is stored with each attempt; question content is not randomly substituted. XP is awarded once on the first passing attempt.
 - Assignments are completion/feedback activities, not numeric-scored assessments. Facilitator status is Not Reviewed / Reviewed / Needs Revision. Assignment XP is awarded once on the first successful submission; later revisions do not award additional XP.
 - Due dates are optional per Assignment. After a due date, the Assignment is marked late; Admin may keep accepting late submissions per Assignment.
 
