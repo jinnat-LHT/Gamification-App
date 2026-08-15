@@ -23,3 +23,5 @@
 3. Link the implementing PR and acceptance-test evidence once available.
 
 | 2026-08-15 | Test and assessment activities allow one final submission; Assignment submissions may be revised until Gate close/due date, with XP awarded once on first successful submission. Late acceptance is configurable by Assignment. | Approved | Preserves assessment integrity while allowing practical work to improve through revision. | Data model must retain submission versions/status, final-submission marker, due-date/late status, and idempotent XP award. |
+
+| 2026-08-15 | Peer Review is anonymous to the recipient; Admin can identify reviewers for audit/moderation. Self-review and duplicate review are rejected. | Approved | Protect honest feedback while preserving operational accountability. | Store reviewer identity privately, enforce uniqueness server-side, and preserve moderation history. |
