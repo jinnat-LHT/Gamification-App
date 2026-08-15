@@ -41,7 +41,8 @@
       id: account.id,
       name: account.display_name || account.email,
       email: account.email,
-      group: "Cohort ของคุณ",
+      group: account.group_name || "ยังไม่มีกลุ่ม",
+      batch: account.batch_name || "ยังไม่มีกำหนดรุ่น",
       archetypeIcon: "fa-user-ninja",
       archetypeTitle: "Executive Learner",
       equippedBadgeId: "b_first",
@@ -68,7 +69,21 @@
     if (data.account_type !== "LEARNER" || !["INVITED", "ACTIVE"].includes(data.status)) {
       throw new Error("บัญชีนี้ไม่มีสิทธิ์เข้า Learner Portal");
     }
-    return data;
+
+    const { data: enrollments, error: enrollmentError } = await client
+      .from("batch_learners")
+      .select("batch_id, group:groups(name, external_code), batch:batches(name, external_code, start_date, end_date)")
+      .eq("learner_id", userId)
+      .in("enrollment_status", ["INVITED", "ACTIVE"])
+      .limit(1);
+    if (enrollmentError) throw new Error("ไม่สามารถอ่านข้อมูลรุ่นเรียนได้");
+
+    const enrollment = enrollments?.[0];
+    return {
+      ...data,
+      group_name: enrollment?.group?.name || enrollment?.group?.external_code || "ยังไม่มีกลุ่ม",
+      batch_name: enrollment?.batch?.name || enrollment?.batch?.external_code || "ยังไม่มีกำหนดรุ่น",
+    };
   }
 
   function showLearner(account) {
