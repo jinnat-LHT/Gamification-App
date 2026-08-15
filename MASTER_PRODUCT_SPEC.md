@@ -255,7 +255,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Assignment file types, size limits, retention, and malware scanning | Required for secure storage |
+| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Data retention, backup, recovery target, and audit-log retention | Required for governance and operations |
 | Leaderboard tie-breaking rule | Makes rankings deterministic |
 | Whether Levels/Badges are visual only or carry future privileges | Prevents hidden gamification rules |
