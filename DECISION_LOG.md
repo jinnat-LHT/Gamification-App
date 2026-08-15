@@ -27,3 +27,5 @@
 | 2026-08-15 | Peer Review is anonymous to the recipient; Admin can identify reviewers for audit/moderation. Self-review and duplicate review are rejected. | Approved | Protect honest feedback while preserving operational accountability. | Store reviewer identity privately, enforce uniqueness server-side, and preserve moderation history. |
 
 | 2026-08-15 | Lock Quiz/Assessment content as a Batch Snapshot at Batch start; later edits create a new Program Version, with Soft Delete for old content. | Approved | Preserve historical assessment integrity while allowing reusable content to evolve. | Store content Version and answer key references on each result; active Batches do not silently change. |
+
+| 2026-08-15 | Assignment files: PDF/DOC/DOCX/PPT/PPTX/XLS/XLSX/PNG/JPG only; max 20 MB/file, max 3 files/Assignment; malware scan; private storage; short-lived authorized URLs; retain at least 1 year after Batch completion. | Approved | Provide practical submission flexibility while controlling security and storage risk. | File service must enforce type/size/count, scan status, retention job, and download audit. |
