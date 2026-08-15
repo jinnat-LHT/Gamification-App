@@ -100,7 +100,7 @@
 | AC-20 | Attendance is recorded for a session | Admin checks/unchecks a learner | XP totals reflect +2,000 XP per attended session without duplicate awards. |
 | AC-21 | A learner is selected | Authorized user submits a Live XP adjustment | A signed +/- transaction records amount, reason, actor, and time. |
 | AC-22 | XP changes are made | Any user reloads or another Admin views the Batch | Totals, ranking, and reports are consistent; business data does not rely on localStorage, and each change identifies the individual Admin actor. |
-| AC-23 | Projector Arena is opened | Scores change through the approved workflow | The Top 10 uses the current Batch only. |
+| AC-23 | Projector Arena is opened | Scores change through the approved workflow | The Top 10 uses the current Batch only and applies XP descending → reached-total timestamp ascending → normalized display-name alphabetical tie-breaks. |
 
 ### E. Reports and export
 
