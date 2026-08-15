@@ -162,7 +162,6 @@ Each enabled Assignment can be configured independently with:
 - instructions and due date (due-date policy TBD)
 - required text response
 - required file upload
-- required URL/link
 - text + file submission
 
 Assignment files are stored in private object storage. Downloads use authorized URLs and are limited to permitted Admins and the submitting Learner. Upload type/size limits, retention, malware scanning, and resubmission policy must be finalized before production.
