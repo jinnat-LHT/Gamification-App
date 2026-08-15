@@ -163,7 +163,7 @@ If an activity is disabled, the related metric/chart is hidden or shown as **N/A
 - Peer Review requires a rating and written feedback for required peers before submission.
 - A learner cannot access or submit a disabled/closed activity.
 - Knowledge Test and Self-Behavior/Peer Review allow one submission per Learner/Batch. Learners may navigate and edit answers before final submit; after submission they cannot edit or resubmit in MVP.
-- Post-test uses the same Batch Snapshot question set for every Learner, while randomizing question order and option order per Learner. The presented order is stored with the result for audit; question content is not randomly substituted.
+- Post-test uses the same Batch Snapshot question set for every Learner, while randomizing question order only per Learner. Option order remains A–D as authored. The presented question order is stored with the result for audit; question content is not randomly substituted.
 - Assignments are completion/feedback activities, not numeric-scored assessments. Facilitator status is Not Reviewed / Reviewed / Needs Revision. Assignment XP is awarded once on the first successful submission; later revisions do not award additional XP.
 - Due dates are optional per Assignment. After a due date, the Assignment is marked late; Admin may keep accepting late submissions per Assignment.
 
