@@ -60,7 +60,7 @@ as $$
         or ra.role = 'FACILITATOR'
       )
   );
-$;
+$$;
 
 create or replace function public.has_program_scope(p_program_id uuid)
 returns boolean
@@ -137,7 +137,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
   select exists (
     select 1
     from public.client_organizations co
@@ -153,7 +153,7 @@ as $
     where co.id = p_client_id
       and ua.status in ('INVITED', 'ACTIVE')
   );
-$;
+$$;
 
 create or replace function public.has_admin_batch_scope(p_batch_id uuid)
 returns boolean
@@ -161,7 +161,7 @@ language sql
 stable
 security definer
 set search_path = public
-as $
+as $$
   select exists (
     select 1
     from public.batches b
@@ -181,7 +181,7 @@ as $
     where b.id = p_batch_id
       and ua.status in ('INVITED', 'ACTIVE')
   );
-$;
+$$;
 
 -- Helper functions are intentionally not exposed as direct client RPC endpoints.
 revoke all on function public.current_user_account_id() from public;
