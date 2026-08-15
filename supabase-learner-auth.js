@@ -81,14 +81,48 @@
     const enrollment = enrollments?.[0];
     return {
       ...data,
+      batch_id: enrollment?.batch_id || null,
       group_name: enrollment?.group?.name || enrollment?.group?.external_code || "ยังไม่มีกลุ่ม",
       batch_name: enrollment?.batch?.name || enrollment?.batch?.external_code || "ยังไม่มีกำหนดรุ่น",
     };
   }
 
-  function showLearner(account) {
+  const activityLabel = (activity) => ({
+    PRE_TEST: "Pre-test",
+    POST_TEST: "Post-test",
+    SELF_BEFORE: "Self-assessment ก่อนเรียน",
+    SELF_AFTER: "Self-assessment หลังเรียน",
+    PEER_REVIEW: "Peer review",
+    ASSIGNMENT: "Assignment",
+  }[activity.activity_type] || activity.activity_key);
+
+  async function showActivityOverview(client, account) {
+    const existing = byId("liveActivityOverview");
+    if (existing) existing.remove();
+    if (!account.batch_id) return;
+
+    const { data: activities, error } = await client
+      .from("batch_activity_configs")
+      .select("activity_type, activity_key, enabled, gate_state, due_at")
+      .eq("batch_id", account.batch_id)
+      .order("activity_type");
+    if (error) return;
+
+    const enabled = (activities || []).filter((activity) => activity.enabled);
+    const card = document.createElement("section");
+    card.id = "liveActivityOverview";
+    card.className = "glass-card neon-frame-cyan p-5 rounded-2xl";
+    const content = enabled.length
+      ? enabled.map((activity) => `<li class="flex items-center justify-between gap-3 py-2 border-b border-slate-800 last:border-0"><span>${activityLabel(activity)}</span><span class="rounded-full px-2 py-0.5 text-xs ${activity.gate_state === "OPEN" ? "bg-emerald-500/20 text-emerald-300" : "bg-slate-700 text-slate-300"}">${activity.gate_state === "OPEN" ? "เปิดใช้งาน" : "รอตามกำหนด"}</span></li>`).join("")
+      : "<li class='py-2 text-slate-400'>ยังไม่มีกิจกรรมที่เปิดในรุ่นนี้</li>";
+    card.innerHTML = `<div class="flex items-center justify-between gap-3"><div><h3 class="font-bold text-slate-100">กิจกรรมของ ${account.batch_name}</h3><p class="text-xs text-slate-400">ข้อมูลจาก Batch ที่คุณลงทะเบียน</p></div><span class="rounded-xl bg-cyan-500/15 px-3 py-1 text-sm font-semibold text-cyan-300">${enabled.length} กิจกรรม</span></div><ul class="mt-3 text-sm text-slate-200">${content}</ul>`;
+    byId("tab-dashboard")?.prepend(card);
+  }
+
+  function showLearner(client, account) {
     window.leadershipQuestLearner = account;
     if (typeof window.loginUser === "function") window.loginUser(learnerState(account), false);
+    showActivityOverview(client, account);
   }
 
   function signOutAndShowError(client, message) {
@@ -121,7 +155,7 @@
       const { data, error } = await client.auth.signInWithPassword({ email, password });
       if (error) showLoginMessage(error.message, "text-rose-300");
       else {
-        try { showLearner(await getLearnerAccount(client, data.user.id)); }
+        try { showLearner(client, await getLearnerAccount(client, data.user.id)); }
         catch (accessError) { await signOutAndShowError(client, accessError.message); }
       }
       button.disabled = false; button.innerHTML = 'เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ml-2"></i>';
@@ -135,7 +169,7 @@
 
     client.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return;
-      try { showLearner(await getLearnerAccount(client, session.user.id)); }
+      try { showLearner(client, await getLearnerAccount(client, session.user.id)); }
       catch (error) { await signOutAndShowError(client, error.message); }
     });
   }
