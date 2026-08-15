@@ -38,13 +38,33 @@ Deno.serve(async(req)=>{
   if(!batchId||!(await canReviewBatch(admin,ctx,batchId))) return out({error:"You do not have access to this batch"},403);
 
   if(action==="list"){
-    const result=await admin.from("submissions").select("id,status,activity_config_id,first_submitted_at,last_submitted_at,batch_learners!inner(learner_id,user_accounts!inner(display_name,email)),batch_activity_configs!inner(activity_key,config_json),submission_attempts(id,attempt_number,response_json,submitted_at,submission_files(id,storage_key,original_filename,mime_type,size_bytes)),facilitator_feedback(id,status,feedback_text,created_at,facilitator_id)").eq("batch_id",batchId).eq("activity_type","ASSIGNMENT").in("status",["SUBMITTED","NEEDS_REVISION","REVIEWED"]).order("last_submitted_at",{ascending:false});
-    if(result.error) return out({error:"Could not load assignment queue"},500);
-    const items=await Promise.all((result.data??[]).map(async(s:any)=>{
-      const attempts=[...(s.submission_attempts??[])].sort((a,b)=>Number(b.attempt_number)-Number(a.attempt_number));
-      const latest=attempts[0]??null;
-      const files=await Promise.all((latest?.submission_files??[]).map(async(f:any)=>{const x=await admin.storage.from(bucket).createSignedUrl(f.storage_key,900);return {...f,signed_url:x.data?.signedUrl??null};}));
-      return {id:s.id,status:s.status,activity_key:s.batch_activity_configs?.activity_key,submitted_at:s.last_submitted_at,learner:s.batch_learners?.user_accounts,attempt_number:latest?.attempt_number??0,text_response:latest?.response_json?.text_response??"",files,feedback:(s.facilitator_feedback??[]).filter((x:any)=>!x.deleted_at).at(-1)??null};
+    const queue=await admin.from("submissions").select("id,status,activity_config_id,batch_learner_id,last_submitted_at").eq("batch_id",batchId).eq("activity_type","ASSIGNMENT").in("status",["SUBMITTED","NEEDS_REVISION","REVIEWED"]).order("last_submitted_at",{ascending:false});
+    if(queue.error) return out({error:"Could not load assignment queue"},500);
+    const configIds=[...new Set((queue.data??[]).map((x:any)=>x.activity_config_id))];
+    const learnerIds=[...new Set((queue.data??[]).map((x:any)=>x.batch_learner_id))];
+    const submissionIds=(queue.data??[]).map((x:any)=>x.id);
+    const [configs, learners, attempts, feedbacks]=await Promise.all([
+      configIds.length?admin.from("batch_activity_configs").select("id,activity_key,config_json").in("id",configIds):Promise.resolve({data:[]}),
+      learnerIds.length?admin.from("batch_learners").select("id,learner_id").in("id",learnerIds):Promise.resolve({data:[]}),
+      submissionIds.length?admin.from("submission_attempts").select("id,submission_id,attempt_number,response_json,submitted_at").in("submission_id",submissionIds).order("attempt_number",{ascending:false}):Promise.resolve({data:[]}),
+      submissionIds.length?admin.from("facilitator_feedback").select("id,submission_id,status,feedback_text,created_at,facilitator_id").in("submission_id",submissionIds).is("deleted_at",null).order("created_at",{ascending:true}):Promise.resolve({data:[]})
+    ]);
+    const userIds=[...new Set((learners.data??[]).map((x:any)=>x.learner_id))];
+    const accounts=userIds.length?await admin.from("user_accounts").select("id,display_name,email").in("id",userIds):{data:[]};
+    const learnerMap=new Map((learners.data??[]).map((x:any)=>[x.id,x.learner_id]));
+    const accountMap=new Map((accounts.data??[]).map((x:any)=>[x.id,x]));
+    const configMap=new Map((configs.data??[]).map((x:any)=>[x.id,x]));
+    const latestAttempt=new Map();
+    for(const attempt of attempts.data??[]) if(!latestAttempt.has(attempt.submission_id)) latestAttempt.set(attempt.submission_id,attempt);
+    const attemptIds=[...latestAttempt.values()].map((x:any)=>x.id);
+    const fileResult=attemptIds.length?await admin.from("submission_files").select("submission_attempt_id,storage_key,original_filename,mime_type,size_bytes").in("submission_attempt_id",attemptIds).is("deleted_at",null):{data:[]};
+    const filesByAttempt=new Map<string,any[]>();
+    for(const file of fileResult.data??[]){const group=filesByAttempt.get(file.submission_attempt_id)??[];group.push(file);filesByAttempt.set(file.submission_attempt_id,group);}
+    const feedbackBySubmission=new Map<string,any>();
+    for(const feedback of feedbacks.data??[]) feedbackBySubmission.set(feedback.submission_id,feedback);
+    const items=await Promise.all((queue.data??[]).map(async(s:any)=>{
+      const latest=latestAttempt.get(s.id); const signedFiles=await Promise.all((filesByAttempt.get(latest?.id)??[]).map(async(f:any)=>{const signed=await admin.storage.from(bucket).createSignedUrl(f.storage_key,900);return {...f,signed_url:signed.data?.signedUrl??null};}));
+      return {id:s.id,status:s.status,activity_key:configMap.get(s.activity_config_id)?.activity_key,submitted_at:s.last_submitted_at,learner:accountMap.get(learnerMap.get(s.batch_learner_id)),attempt_number:latest?.attempt_number??0,text_response:latest?.response_json?.text_response??"",files:signedFiles,feedback:feedbackBySubmission.get(s.id)??null};
     }));
     return out({items});
   }
