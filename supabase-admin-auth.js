@@ -153,7 +153,9 @@
         showLoginMessage("ไม่สามารถโหลดบริการเข้าสู่ระบบได้", "text-rose-300");
         return;
       }
-      bootWithClient(window.supabase.createClient(config.url, config.anonKey));
+      const client = window.supabase.createClient(config.url, config.anonKey);
+      window.leadershipQuestSupabase = client;
+      bootWithClient(client);
     };
 
     if (window.supabase?.createClient) return ready();
