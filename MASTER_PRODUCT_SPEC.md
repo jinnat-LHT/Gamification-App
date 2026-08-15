@@ -169,7 +169,7 @@ If an activity is disabled, the related metric/chart is hidden or shown as **N/A
 
 ### 7.3 Assignments
 Each enabled Assignment can be configured independently with:
-- instructions and due date (due-date policy TBD)
+- instructions and optional due date
 - required text response
 - required file upload
 - text + file submission
