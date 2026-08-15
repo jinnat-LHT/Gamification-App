@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Leadership Quest Platform - Executive Gamification</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Google Fonts - Kanit & Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Kanit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Canvas Confetti Library for Celebration Effect -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0284c7',
+              700: '#0369a1',
+              800: '#075985',
+              900: '#0c4a6e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Kanit', 'Inter', sans-serif;
+      background-color: #070a13;
+      color: #f8fafc;
+      background-image: 
+        radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 85% 60%, rgba(168, 85, 247, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 50% 90%, rgba(245, 158, 11, 0.08) 0%, transparent 50%);
+      background-attachment: fixed;
+    }
+
+    .glass-card {
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.7) 100%);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 0 20px -3px rgba(14, 165, 233, 0.22), inset 0 0 20px -5px rgba(56, 189, 248, 0.12);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(56, 189, 248, 0.65);
+      box-shadow: 0 0 30px 2px rgba(14, 165, 233, 0.4), inset 0 0 25px -2px rgba(56, 189, 248, 0.22);
+    }
+
+    .neon-frame-cyan {
+      background: linear-gradient(135deg, rgba(8, 47, 73, 0.6) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1px solid rgba(6, 182, 212, 0.6);
+      box-shadow: 0 0 18px rgba(6, 182, 212, 0.35), inset 0 0 15px rgba(6, 182, 212, 0.15);
+    }
+
+    .neon-frame-emerald {
+      background: linear-gradient(135deg, rgba(6, 78, 59, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.6);
+      box-shadow: 0 0 18px rgba(16, 185, 129, 0.35), inset 0 0 15px rgba(16, 185, 129, 0.15);
+    }
+
+    .neon-frame-purple {
+      background: linear-gradient(135deg, rgba(88, 28, 135, 0.5) 0%, rgba(15, 23, 42, 0.85) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.6);
+      box-shadow: 0 0 18px rgba(168, 85, 247, 0.35), inset 0 0 15px rgba(168, 85, 247, 0.15);
+    }
+
+    .neon-frame-amber {
+      background: linear-gradient(135deg, rgba(120, 53, 15, 0.5) 0%, rgba(15, 23, 42, 0.9) 100%);
+      border: 1px solid rgba(245, 158, 11, 0.7);
+      box-shadow: 0 0 22px rgba(245, 158, 11, 0.45), inset 0 0 20px rgba(245, 158, 11, 0.2);
+    }
+
+    .gold-glow { box-shadow: 0 0 35px 2px rgba(245, 158, 11, 0.55), inset 0 0 20px rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.8); }
+    .silver-glow { box-shadow: 0 0 25px 0px rgba(148, 163, 184, 0.45), inset 0 0 15px rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.6); }
+    .bronze-glow { box-shadow: 0 0 25px 0px rgba(217, 119, 6, 0.45), inset 0 0 15px rgba(217, 119, 6, 0.2); border: 1px solid rgba(217, 119, 6, 0.6); }
+
+    .glass-nav {
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .badge-epic { border: 1px solid rgba(245, 158, 11, 0.7); box-shadow: 0 0 20px rgba(245, 158, 11, 0.4); }
+
+    .tut-spotlight {
+      position: relative !important;
+      z-index: 45 !important;
+      outline: 4px solid #22d3ee !important;
+      outline-offset: 4px !important;
+      box-shadow: 0 0 35px 12px rgba(34, 211, 238, 0.85) !important;
+      border-color: #22d3ee !important;
+      transition: all 0.4s ease-in-out !important;
+      animation: pulseGlow 1.5s ease-in-out infinite !important;
+    }
+
+    @keyframes wiggle { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-8deg) scale(1.08); } 75% { transform: rotate(8deg) scale(1.08); } }
+    .animate-wiggle { animation: wiggle 0.4s ease-in-out infinite; }
+
+    @keyframes pulseGlow { 0%, 100% { opacity: 0.85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-5 right-5 z-50 transform translate-x-full transition-transform duration-300 ease-in-out glass-card neon-frame-emerald px-5 py-3 rounded-xl shadow-2xl flex items-center space-x-3 border-l-4 border-emerald-400 hidden">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-xl animate-bounce"></i>
+    <span id="toastMsg" class="text-sm font-medium text-slate-100">การดำเนินการเสร็จสมบูรณ์</span>
+  </div>
+
+  <!-- XP Celebration Modal -->
+  <div id="xpRewardModal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="glass-card neon-frame-amber p-8 rounded-3xl max-w-sm w-full text-center relative overflow-hidden shadow-2xl">
+      <div class="w-20 h-20 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-white text-4xl mx-auto mb-4 shadow-xl shadow-amber-500/50 animate-bounce">
+        <i class="fa-solid fa-trophy text-yellow-200"></i>
+      </div>
+      <div id="rewardXpText" class="text-4xl font-black text-amber-400 tracking-tight mb-1 drop-shadow-[0_0_10px_rgba(245,158,11,0.6)]">+1,000 XP</div>
+      <h3 id="rewardTitleText" class="text-xl font-bold text-slate-100 mb-1">ภารกิจเสร็จสิ้น!</h3>
+      <p id="rewardDetailText" class="text-xs text-slate-300 mb-4">คุณได้รับคะแนนสะสมเพิ่มในการพัฒนาผู้นำ</p>
+      
+      <div id="rewardTotalXpText" class="py-2.5 px-4 rounded-xl bg-slate-900/90 border border-slate-700 text-xs font-semibold text-cyan-300 mb-6">
+        คะแนนสะสมรวมปัจจุบัน: 24,500 XP
+      </div>
+
+      <button onclick="closeXpRewardModal()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-extrabold rounded-xl shadow-lg transition transform active:scale-95">
+        ตกลงและดูแดชบอร์ด <i class="fa-solid fa-arrow-right ml-1"></i>
+      </button>
+    </div>
+  </div>
+
+  <header id="mainHeader" class="sticky top-0 z-40 glass-nav hidden">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col md:flex-row items-center justify-between py-2.5 md:py-0 md:h-16 gap-3 md:gap-0">
+        
+        <div class="flex items-center justify-between w-full md:w-auto">
+          <div class="flex items-center space-x-3 cursor-pointer group" onclick="handleLogoClick()">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shrink-0">
+              <i class="fa-solid fa-shield-halved text-white text-lg"></i>
+            </div>
+            <div>
+              <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent leading-tight">
+                LEADERSHIP QUEST
+              </h1>
+              <p class="text-xs text-slate-400 -mt-1">Executive Gamification Platform</p>
+            </div>
+          </div>
+
+          <div class="flex items-center space-x-2 md:hidden">
+            <button onclick="toggleQuickDemoModal(true)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-cyan-500/30">
+              <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+            <button onclick="logout()" title="ออกจากระบบ" class="p-2 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs">
+              <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav id="desktopNav" class="flex items-center space-x-1 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-none">
+          <!-- Learner Menus -->
+          <button id="nav-dashboard" onclick="switchTab('dashboard')" class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-300 hover:text-white flex items-center">
+            <i class="fa-solid fa-chart-pie mr-1.5 text-cyan-400"></i>แดชบอร์ด
+          </button>
+          <button id="nav-tests" onclick="switchTab('tests')" class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-300 hover:text-white flex items-center">
+            <i class="fa-solid fa-clipboard-check mr-1.5 text-blue-400"></i>Test / Assessment
+          </button>
+          <button id="nav-assignments" onclick="switchTab('assignments')" class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-300 hover:text-white flex items-center">
+            <i class="fa-solid fa-file-pen mr-1.5 text-purple-400"></i>Assignment
+          </button>
+          <button id="nav-leaderboard" onclick="switchTab('leaderboard')" class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all text-slate-300 hover:text-white flex items-center">
+            <i class="fa-solid fa-trophy mr-1.5 text-amber-400"></i>Ranking
+          </button>
+
+          <!-- Admin Menus -->
+          <button id="nav-admin-setup" onclick="switchAdminModule('setup')" class="nav-btn hidden px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-purple-300 hover:text-white bg-purple-950/40 border border-purple-500/40 flex items-center">
+            <i class="fa-solid fa-layer-group mr-1.5 text-purple-400"></i>Setup Center
+          </button>
+          <button id="nav-admin-quiz" onclick="switchAdminModule('quiz')" class="nav-btn hidden px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-cyan-300 hover:text-white bg-cyan-950/40 border border-cyan-500/40 flex items-center">
+            <i class="fa-solid fa-clipboard-question mr-1.5 text-cyan-400"></i>Quiz Bank
+          </button>
+          <button id="nav-admin-users" onclick="switchAdminModule('users')" class="nav-btn hidden px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-amber-300 hover:text-white bg-amber-950/40 border border-amber-500/40 flex items-center">
+            <i class="fa-solid fa-users-gear mr-1.5 text-amber-400"></i>Users & Scores
+          </button>
+          <button id="nav-admin-reports" onclick="switchAdminModule('reports')" class="nav-btn hidden px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-emerald-300 hover:text-white bg-emerald-950/40 border border-emerald-500/40 flex items-center">
+            <i class="fa-solid fa-chart-column mr-1.5 text-emerald-400"></i>รายงานภาพรวม (Reports)
+          </button>
+        </nav>
+
+        <div class="hidden md:flex items-center space-x-3">
+          <div id="userInfo" class="flex items-center space-x-3 text-right cursor-pointer" onclick="openCharacterCustomizer()">
+            <div>
+              <div id="userName" class="text-sm font-semibold text-slate-200">คุณสมชาย ใจดี</div>
+              <div id="userRoleBadge" class="text-xs text-cyan-400">Learner (Group Alpha)</div>
+            </div>
+            <div class="w-9 h-9 rounded-full bg-cyan-500/20 border border-cyan-400/60 flex items-center justify-center text-cyan-300 font-bold relative">
+              <i class="fa-solid fa-user-ninja" id="userAvatarIcon"></i>
+            </div>
+          </div>
+
+          <button onclick="toggleQuickDemoModal(true)" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 border border-slate-700">
+            <i class="fa-solid fa-arrows-rotate mr-1"></i>สลับผู้ใช้
+          </button>
+
+          <button onclick="logout()" title="ออกจากระบบ" class="px-3 py-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-xs font-semibold transition flex items-center gap-1">
+            <i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- PERSISTENT CONTEXT BAR (Program -> Batch cascading selector + real-time stats) -->
+      <div id="contextBar" class="hidden flex-wrap items-center gap-2.5 py-2.5 border-t border-slate-800/70">
+        <div class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 uppercase mr-1 shrink-0">
+          <i class="fa-solid fa-layer-group text-cyan-400"></i>บริบทปัจจุบัน
+        </div>
+        <select id="ctxProgramSelect" onchange="onContextProgramChange(this.value)" class="bg-slate-900/90 border border-cyan-500/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 max-w-[200px]"></select>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-[10px]"></i>
+        <select id="ctxBatchSelect" onchange="onContextBatchChange(this.value)" class="bg-slate-900/90 border border-cyan-500/40 rounded-lg px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 max-w-[200px]"></select>
+
+        <button onclick="openProgramModal(-1)" class="px-2.5 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-500/40 text-[11px] font-semibold flex items-center gap-1 shrink-0">
+          <i class="fa-solid fa-plus"></i>โปรแกรมใหม่
+        </button>
+        <button onclick="openBatchModal(-1)" class="px-2.5 py-1.5 rounded-lg bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 border border-purple-500/40 text-[11px] font-semibold flex items-center gap-1 shrink-0">
+          <i class="fa-solid fa-plus"></i>รุ่นใหม่
+        </button>
+
+        <div class="flex items-center gap-3 sm:ml-auto bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800 text-[11px] shrink-0">
+          <span class="text-slate-400"><i class="fa-solid fa-people-group text-purple-400 mr-1"></i>กลุ่ม <b id="ctxStatGroups" class="text-slate-200">0</b></span>
+          <span class="text-slate-400"><i class="fa-solid fa-user text-cyan-400 mr-1"></i>สมาชิก <b id="ctxStatMembers" class="text-slate-200">0</b></span>
+          <span class="text-slate-400"><i class="fa-solid fa-bolt text-amber-400 mr-1"></i>XP รวม <b id="ctxStatXp" class="text-amber-300">0</b></span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- LIVE TICKER -->
+  <div id="gameTicker" class="bg-slate-900/90 border-b border-cyan-500/30 py-1.5 px-4 hidden">
+    <div class="max-w-7xl mx-auto flex items-center justify-between text-xs">
+      <div class="flex items-center space-x-2 truncate">
+        <span class="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-bold uppercase flex items-center gap-1">
+          <i class="fa-solid fa-bolt text-amber-400"></i> LIVE QUEST LOG
+        </span>
+        <span id="tickerText" class="text-slate-300 truncate">⚡ อัปเดตคะแนนสดพร้อมใช้งาน!</span>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+    <!-- LOGIN VIEW -->
+    <div id="loginView" class="max-w-md mx-auto my-12 glass-card neon-frame-cyan p-8 rounded-2xl shadow-2xl">
+      <div class="text-center mb-6">
+        <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center mx-auto mb-4 shadow-xl">
+          <i class="fa-solid fa-key text-white text-2xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-slate-100">เข้าสู่ระบบ Leadership Quest</h2>
+        <p class="text-sm text-slate-400 mt-1">กรอกอีเมลเพื่อเข้าสู่ระบบผู้เรียน หรือ แอดมิน</p>
+      </div>
+
+      <form onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 uppercase mb-2">อีเมลผู้เรียน / Admin</label>
+          <input type="email" id="loginEmail" required placeholder="somchai@company.com" class="w-full bg-slate-900/80 border border-cyan-500/40 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-400 transition" />
+        </div>
+        <button type="submit" class="w-full py-3 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-xl shadow-lg transition">
+          เข้าสู่ระบบ <i class="fa-solid fa-arrow-right ml-2"></i>
+        </button>
+      </form>
+
+      <div class="mt-6 pt-6 border-t border-slate-800 text-center space-y-3">
+        <p class="text-xs text-slate-400">สลับบัญชีทดสอบด่วน (Quick Demo):</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          <button onclick="quickLogin('kittisak@company.com')" class="px-3 py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-xs text-emerald-300 border border-emerald-500/40 font-medium">
+            ผู้เรียนใหม่ (กิตติศักดิ์ - มี Guided Tour) ✨
+          </button>
+          <button onclick="quickLogin('somchai@company.com')" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs text-cyan-300 border border-cyan-500/30">
+            ผู้เรียน (สมชาย)
+          </button>
+          <button onclick="quickLogin('admin@company.com')" class="px-3 py-1.5 rounded-lg bg-purple-950/60 text-xs text-purple-300 border border-purple-500/40">
+            แอดมิน (Admin)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="appView" class="hidden space-y-8">
+
+      <!-- 1. LEARNER DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab-content space-y-8">
+        
+        <!-- Welcome Banner & Level Bar -->
+        <div id="targetWelcomeBanner" class="glass-card neon-frame-cyan p-6 sm:p-8 rounded-2xl relative overflow-hidden transition-all duration-300">
+          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 relative z-10">
+            <div>
+              <div class="flex items-center space-x-3 mb-2">
+                <span class="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1">
+                  <i class="fa-solid fa-crown text-amber-400"></i><span id="dashRole">Learner</span>
+                </span>
+                <span id="dashGroup" class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40">
+      …35933 tokens truncated…Name = 'hover:bg-slate-800/40 transition';
+        let html = `<td class="py-3 px-4"><div class="font-semibold text-slate-200 text-sm">${u.name}</div><div class="text-xs text-slate-400">${groupNameOf(u)}</div></td>`;
+        for (let i = 0; i < 5; i++) {
+          html += `<td class="py-3 px-4 text-center"><input type="checkbox" ${u.attendance[i] ? 'checked' : ''} onchange="toggleAdminAttendance('${u.id}', ${i})" class="w-4 h-4 accent-emerald-500" /></td>`;
+        }
+        html += `
+          <td class="py-3 px-4 text-center">
+            <div class="flex items-center justify-center gap-1">
+              <span class="text-xs font-bold text-indigo-400 w-14 text-right">${(u.liveXp || 0).toLocaleString()} XP</span>
+              <input type="number" id="liveXpInput_${u.id}" placeholder="+/-" onkeypress="if(event.key==='Enter') adjustAdminLiveXp('${u.id}')" class="w-14 bg-slate-900 border border-slate-700 rounded p-1 text-xs text-slate-100" />
+            </div>
+          </td>
+          <td class="py-3 px-4 text-right font-bold text-amber-400">${calculateTotalXp(u).toLocaleString()} XP</td>
+        `;
+        tr.innerHTML = html; tbody.appendChild(tr);
+      });
+    }
+
+    function adjustAdminLiveXp(userId) {
+      const input = document.getElementById(`liveXpInput_${userId}`);
+      const val = parseInt(input.value); if (isNaN(val)) return;
+      const u = DB.users.find(usr => usr.id === userId);
+      if (u) { u.liveXp = Math.max(0, (u.liveXp || 0) + val); saveData(); renderAdminMgmtTab(); showToast('อัปเดตคะแนนเรียบร้อย'); }
+    }
+
+    function toggleAdminAttendance(userId, idx) {
+      const u = DB.users.find(usr => usr.id === userId);
+      if (u) { u.attendance[idx] = !u.attendance[idx]; saveData(); renderAdminMgmtTab(); }
+    }
+
+    /* ADMIN REPORTS FUNCTIONS — ประมวลผลเฉพาะ Batch ปัจจุบัน */
+    function renderAdminReportsTab() {
+      renderContextBar();
+      const learners = currentLearners();
+      const completedKnowledge = learners.filter(u => u.hasPretest && u.hasPosttest && Number(u.preScore) > 0);
+      const growthRates = completedKnowledge.map(u => ((Number(u.postScore) - Number(u.preScore)) / Number(u.preScore)) * 100);
+      const totalAttendance = learners.reduce((sum, u) => sum + (u.attendance || []).filter(Boolean).length, 0);
+      const attendanceRate = learners.length ? (totalAttendance / (learners.length * 5)) * 100 : 0;
+      const totalXpSum = learners.reduce((sum, u) => sum + calculateTotalXp(u), 0);
+
+      document.getElementById('kpiLearnerCount').textContent = learners.length.toLocaleString();
+      document.getElementById('kpiKnowledgeGrowth').textContent = `${growthRates.length ? average(growthRates).toFixed(1) : '0.0'}%`;
+      document.getElementById('kpiAttendanceRate').textContent = `${attendanceRate.toFixed(1)}%`;
+      document.getElementById('kpiTotalXpSum').textContent = `${totalXpSum.toLocaleString()} XP`;
+
+      initKnowledgeComparisonChart(learners);
+      initCohortRadarChart(learners);
+      initAttendanceTrendChart(learners);
+      initAssignmentCompletionChart(learners);
+      initLevelDistributionChart(learners);
+      initGroupAverageXpChart();
+    }
+
+    function average(values) {
+      return values.length ? values.reduce((sum, value) => sum + Number(value || 0), 0) / values.length : 0;
+    }
+
+    function replaceAnalyticsChart(key, canvasId, config) {
+      const canvas = document.getElementById(canvasId); if (!canvas) return;
+      analyticsChartInstances[key]?.destroy();
+      analyticsChartInstances[key] = new Chart(canvas, config);
+    }
+
+    function cartesianOptions(extra = {}) {
+      return {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { labels: { color: '#cbd5e1' } } },
+        scales: {
+          x: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.10)' } },
+          y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(148,163,184,0.10)' } }
+        },
+        ...extra
+      };
+    }
+
+    function initKnowledgeComparisonChart(learners) {
+      const cohortPreAverage = average(learners.map(u => Number(u.preScore || 0)));
+      const cohortPostAverage = average(learners.map(u => Number(u.postScore || 0)));
+      replaceAnalyticsChart('knowledge', 'knowledgeComparisonChart', {
+        type: 'bar',
+        data: {
+          labels: ['Cohort Average'],
+          datasets: [
+            { label: 'Pre-test Average', data: [Number(cohortPreAverage.toFixed(2))], backgroundColor: 'rgba(6,182,212,0.65)', borderColor: '#22d3ee', borderWidth: 1 },
+            { label: 'Post-test Average', data: [Number(cohortPostAverage.toFixed(2))], backgroundColor: 'rgba(16,185,129,0.65)', borderColor: '#34d399', borderWidth: 1 }
+          ]
+        },
+        options: cartesianOptions({ scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { beginAtZero: true, max: 10, ticks: { color: '#94a3b8', stepSize: 1 }, grid: { color: 'rgba(148,163,184,0.10)' } } } })
+      });
+    }
+
+    function initCohortRadarChart(learners) {
+      const before = [0, 1, 2, 3, 4].map(i => average(learners.filter(u => u.hasBehaviorBefore).map(u => u.behaviorBeforeScores?.[i] || 0)));
+      const after = [0, 1, 2, 3, 4].map(i => average(learners.filter(u => u.hasBehaviorAfter).map(u => u.behaviorAfterScores?.[i] || 0)));
+      replaceAnalyticsChart('competency', 'cohortRadarChart', {
+        type: 'radar',
+        data: {
+          labels: ['Strategic Thinking', 'Coaching & Feedback', 'Growth Mindset', 'Team Execution', 'Agility & Change'],
+          datasets: [
+            { label: 'Cohort Average (BEFORE)', data: before, backgroundColor: 'rgba(6, 182, 212, 0.25)', borderColor: 'rgba(6, 182, 212, 1)', borderWidth: 2 },
+            { label: 'Cohort Average (AFTER)', data: after, backgroundColor: 'rgba(16, 185, 129, 0.25)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 2 }
+          ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#cbd5e1' } } }, scales: { r: { min: 0, max: 5, ticks: { stepSize: 1, color: '#94a3b8', backdropColor: 'transparent' }, grid: { color: 'rgba(148,163,184,0.2)' }, angleLines: { color: 'rgba(148,163,184,0.2)' }, pointLabels: { color: '#cbd5e1', font: { size: 10 } } } } }
+      });
+    }
+
+    function initAttendanceTrendChart(learners) {
+      const rates = [0, 1, 2, 3, 4].map(i => learners.length ? (learners.filter(u => u.attendance?.[i]).length / learners.length) * 100 : 0);
+      replaceAnalyticsChart('attendance', 'attendanceTrendChart', {
+        type: 'line',
+        data: { labels: ['Session 1', 'Session 2', 'Session 3', 'Session 4', 'Session 5'], datasets: [{ label: 'Attendance %', data: rates, borderColor: '#c084fc', backgroundColor: 'rgba(192,132,252,0.2)', fill: true, tension: 0.35, pointRadius: 4 }] },
+        options: cartesianOptions({ scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8', callback: value => `${value}%` }, grid: { color: 'rgba(148,163,184,0.10)' } } } })
+      });
+    }
+
+    function initAssignmentCompletionChart(learners) {
+      const rates = [1, 2, 3].map(number => learners.length ? (learners.filter(u => u.assignments?.[number]?.done).length / learners.length) * 100 : 0);
+      replaceAnalyticsChart('assignments', 'assignmentCompletionChart', {
+        type: 'bar',
+        data: { labels: ['Assignment #1', 'Assignment #2', 'Assignment #3'], datasets: [{ label: 'Completion %', data: rates, backgroundColor: ['rgba(245,158,11,0.7)', 'rgba(249,115,22,0.7)', 'rgba(244,63,94,0.7)'], borderWidth: 0, borderRadius: 8 }] },
+        options: cartesianOptions({ scales: { x: { ticks: { color: '#94a3b8' }, grid: { display: false } }, y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8', callback: value => `${value}%` }, grid: { color: 'rgba(148,163,184,0.10)' } } } })
+      });
+    }
+
+    function leadershipLevelForXp(xp) {
+      if (xp < 15000) return 'Emerging';
+      if (xp < 30000) return 'Visionary';
+      if (xp < 50000) return 'Strategic';
+      return 'Master';
+    }
+
+    function initLevelDistributionChart(learners) {
+      const labels = ['Emerging', 'Visionary', 'Strategic', 'Master'];
+      const counts = labels.map(label => learners.filter(u => leadershipLevelForXp(calculateTotalXp(u)) === label).length);
+      replaceAnalyticsChart('levels', 'levelDistributionChart', {
+        type: 'doughnut',
+        data: { labels, datasets: [{ data: counts, backgroundColor: ['#22d3ee', '#818cf8', '#f59e0b', '#f43f5e'], borderColor: '#0f172a', borderWidth: 3 }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '62%', plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } } }
+      });
+    }
+
+    function initGroupAverageXpChart() {
+      const groups = currentGroups();
+      const averages = groups.map(group => {
+        const members = currentLearners().filter(u => u.groupId === group.id);
+        return Math.round(average(members.map(calculateTotalXp)));
+      });
+      replaceAnalyticsChart('groups', 'groupAverageXpChart', {
+        type: 'bar',
+        data: { labels: groups.map(g => g.name), datasets: [{ label: 'Average XP', data: averages, backgroundColor: 'rgba(217,70,239,0.65)', borderColor: '#e879f9', borderWidth: 1, borderRadius: 8 }] },
+        options: cartesianOptions({ indexAxis: 'y' })
+      });
+    }
+
+    /* PROJECTOR ARENA SINGLE SCREEN TOP 10 NO SCROLL */
+    function toggleProjectorArena(show) {
+      const modal = document.getElementById('projectorArenaModal'); if (!modal) return;
+      if (show) { renderSingleScreenArena(); modal.classList.remove('hidden'); }
+      else modal.classList.add('hidden');
+    }
+
+    function renderSingleScreenArena() {
+      const sorted = [...currentLearners()].sort((a, b) => calculateTotalXp(b) - calculateTotalXp(a));
+      const podium = document.getElementById('arenaPodiumContainer');
+      const roster = document.getElementById('arenaRosterContainer');
+
+      if (podium && sorted.length >= 3) {
+        podium.innerHTML = `
+          <!-- 2nd Place -->
+          <div class="glass-card p-4 rounded-2xl silver-glow text-center order-2">
+            <div class="w-14 h-14 rounded-full bg-slate-400 p-0.5 mx-auto mb-2 relative">
+              <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-slate-200"><i class="fa-solid fa-user-astronaut"></i></div>
+              <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-400 text-slate-950 text-[10px] font-black flex items-center justify-center">2</span>
+            </div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold">2nd Place</div>
+            <div class="text-xs font-bold text-slate-100 truncate">${sorted[1].name}</div>
+            <div class="text-sm font-black text-slate-200 mt-0.5">${calculateTotalXp(sorted[1]).toLocaleString()} XP</div>
+          </div>
+
+          <!-- 1st Winner -->
+          <div class="glass-card p-5 rounded-2xl gold-glow text-center order-1 border-amber-500 bg-slate-900/95 scale-105">
+            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 p-0.5 mx-auto mb-2 relative">
+              <div class="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-amber-400 text-xl"><i class="fa-solid fa-crown"></i></div>
+              <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center">1</span>
+            </div>
+            <div class="text-[10px] text-amber-400 uppercase font-extrabold">1st Winner</div>
+            <div class="text-sm font-black text-slate-100 truncate">${sorted[0].name}</div>
+            <div class="text-base font-black text-amber-400 mt-0.5">${calculateTotalXp(sorted[0]).toLocaleString()} XP</div>
+          </div>
+
+          <!-- 3rd Place -->
+          <div class="glass-card p-4 rounded-2xl bronze-glow text-center order-3">
+            <div class="w-14 h-14 rounded-full bg-amber-700 p-0.5 mx-auto mb-2 relative">
+              <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-500"><i class="fa-solid fa-user-tie"></i></div>
+              <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-700 text-slate-100 text-[10px] font-black flex items-center justify-center">3</span>
+            </div>
+            <div class="text-[10px] text-amber-500 uppercase font-bold">3rd Place</div>
+            <div class="text-xs font-bold text-slate-100 truncate">${sorted[2].name}</div>
+            <div class="text-sm font-black text-amber-500 mt-0.5">${calculateTotalXp(sorted[2]).toLocaleString()} XP</div>
+          </div>
+        `;
+      }
+
+      if (roster) {
+        roster.innerHTML = '';
+        const top4to10 = sorted.slice(3, 10);
+        if (top4to10.length === 0) {
+          roster.innerHTML = `<div class="text-xs text-slate-500 text-center py-4">ยังไม่มีข้อมูลผู้ท้าชิงเพิ่มเติม</div>`;
+        } else {
+          top4to10.forEach((u, idx) => {
+            const item = document.createElement('div');
+            item.className = 'flex items-center justify-between p-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs';
+            item.innerHTML = `
+              <div class="flex items-center space-x-3">
+                <span class="w-6 text-center font-bold text-slate-400">${idx + 4}</span>
+                <span class="font-semibold text-slate-200">${u.name}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">${groupNameOf(u)}</span>
+              </div>
+              <span class="font-bold text-amber-400">${calculateTotalXp(u).toLocaleString()} XP</span>
+            `;
+            roster.appendChild(item);
+          });
+        }
+      }
+    }
+
+    function exportCSVData() {
+      const program = currentProgram(), batch = currentBatch();
+      let csv = '\uFEFFProgram,Batch,Name,Email,Group,Role,PreScore,PostScore,KnowledgeGrowthPercent,AttendanceSessions,AttendanceRatePercent,Assignment1,Assignment2,Assignment3,BehaviorBeforeAverage,BehaviorAfterAverage,TotalXP\n';
+      currentLearners().forEach(u => {
+        const attendanceSessions = (u.attendance || []).filter(Boolean).length;
+        const growth = u.hasPretest && u.hasPosttest && Number(u.preScore) > 0 ? ((Number(u.postScore) - Number(u.preScore)) / Number(u.preScore)) * 100 : 0;
+        const beforeAverage = average(u.hasBehaviorBefore ? (u.behaviorBeforeScores || []) : []);
+        const afterAverage = average(u.hasBehaviorAfter ? (u.behaviorAfterScores || []) : []);
+        csv += `"${program?.name || ''}","${batch?.name || ''}","${u.name}","${u.email}","${groupNameOf(u)}","${u.role}",${Number(u.preScore || 0)},${Number(u.postScore || 0)},${growth.toFixed(1)},${attendanceSessions},${(attendanceSessions / 5 * 100).toFixed(1)},${u.assignments?.[1]?.done ? 1 : 0},${u.assignments?.[2]?.done ? 1 : 0},${u.assignments?.[3]?.done ? 1 : 0},${beforeAverage.toFixed(2)},${afterAverage.toFixed(2)},${calculateTotalXp(u)}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+      link.setAttribute('download', `leadership_quest_scores_${batch?.name || 'batch'}.csv`);
+      document.body.appendChild(link); link.click(); document.body.removeChild(link);
+      showToast('📥 ส่งออกข้อมูล CSV เรียบร้อยแล้ว');
+    }
+
+    /* QUIZ BUILDER FUNCTIONS */
+    function renderAdminQuestions(type = adminManageType) {
+      adminManageType = type;
+      const listContainer = document.getElementById('adminQuestionList'); if (!listContainer) return;
+      listContainer.innerHTML = '';
+      const list = type === 'knowledge' ? KNOWLEDGE_QUESTIONS : BEHAVIOR_QUESTIONS;
+
+      list.forEach((q, idx) => {
+        const card = document.createElement('div');
+        card.className = 'p-3 rounded-xl bg-slate-900/60 border border-slate-700 flex justify-between items-start gap-4';
+        card.innerHTML = `
+          <div><div class="text-xs font-bold text-slate-200">${type === 'knowledge' ? q.q : q.title}</div><div class="text-[10px] text-slate-400 mt-1">${type === 'knowledge' ? 'ตัวเลือก: ' + q.options.length : q.desc}</div></div>
+          <div class="flex space-x-1"><button onclick="openQuestionEditor(${idx})" class="p-2 rounded bg-slate-800 text-blue-400"><i class="fa-solid fa-pen"></i></button><button onclick="deleteAdminQuestion(${idx})" class="p-2 rounded bg-slate-800 text-red-400"><i class="fa-solid fa-trash"></i></button></div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    function openQuestionEditor(idx) {
+      editingQuestionIdx = idx;
+      document.getElementById('questionEditorModal').classList.remove('hidden');
+    }
+    function closeQuestionEditor() { document.getElementById('questionEditorModal').classList.add('hidden'); }
+
+    function saveAdminQuestion() {
+      commitProgramQuestionBanks(); closeQuestionEditor(); renderAdminQuestions();
+      showToast('✅ บันทึกคำถามเรียบร้อยแล้ว');
+    }
+
+    function deleteAdminQuestion(idx) {
+      if (adminManageType === 'knowledge') KNOWLEDGE_QUESTIONS.splice(idx, 1);
+      else BEHAVIOR_QUESTIONS.splice(idx, 1);
+      commitProgramQuestionBanks(); renderAdminQuestions();
+      showToast('🗑️ ลบคำถามเรียบร้อยแล้ว');
+    }
+
+    function applyCustomBadgeDefinitions() {
+      DB.customBadges.forEach(b => {
+        if (BADGE_DEFINITIONS.some(existing => existing.id === b.id)) return;
+        BADGE_DEFINITIONS.push(Object.assign({}, b, {
+          checkUnlocked: (u) => u.customBadges?.includes(b.id),
+          getProgress: (u) => u.customBadges?.includes(b.id) ? 100 : 0
+        }));
+      });
+    }
+
+    /* TUTORIAL NAV FUNCTIONS */
+    function startTutorial() {
+      currentTutorialStep = 0;
+      document.getElementById('tutorialModal')?.classList.remove('hidden');
+      renderTutorialStep();
+    }
+
+    function renderTutorialStep() {
+      const step = TUTORIAL_STEPS[currentTutorialStep]; if (!step) return;
+      document.getElementById('tutStepBadge').textContent = `ขั้นตอนที่ ${currentTutorialStep + 1}/${TUTORIAL_STEPS.length}`;
+      document.getElementById('tutTitle').textContent = step.title;
+      document.getElementById('tutSubtitle').textContent = step.subtitle;
+      document.getElementById('tutBodyBox').innerHTML = step.body;
+      if (step.tab) switchTab(step.tab);
+    }
+
+    function nextTutorialStep() {
+      if (currentTutorialStep < TUTORIAL_STEPS.length - 1) { currentTutorialStep++; renderTutorialStep(); }
+      else skipTutorial();
+    }
+
+    function prevTutorialStep() {
+      if (currentTutorialStep > 0) { currentTutorialStep--; renderTutorialStep(); }
+    }
+
+    function skipTutorial() { document.getElementById('tutorialModal')?.classList.add('hidden'); switchTab('dashboard'); }
+    function toggleQuickDemoModal(show) { document.getElementById('quickDemoModal')?.classList.toggle('hidden', !show); }
+    function openCharacterCustomizer() { showToast('✨ เปิดเมนูปรับแต่งตัวละครเรียบร้อย'); }
+    function closeXpRewardModal() { document.getElementById('xpRewardModal')?.classList.add('hidden'); switchTab('dashboard'); }
+    function openLootChest(stage) { showToast('🎁 ปลดล็อกรางวัลหีบสมบัติเรียบร้อยแล้ว!'); }
+  </script>
+  <script src="./supabase-admin-config.js"></script>
+  <script src="./supabase-admin-auth.js"></script>
+</body>
+</html>
