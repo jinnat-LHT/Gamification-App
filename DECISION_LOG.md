@@ -37,3 +37,5 @@
 | 2026-08-15 | Executive Post-test reporting uses each Learner’s first passing Attempt (≥80%), aggregated as the selected Batch’s cohort average. | Approved | Reflect the achieved passing outcome while keeping the report at cohort level. | Store first-passing score separately from all attempts; do not expose individual rows in the executive chart. |
 
 | 2026-08-15 | Leaderboard ties use the earlier timestamp of reaching the tied XP total; identical timestamps fall back to normalized display-name alphabetical order. | Approved | Make rankings deterministic and reward earlier achievement without arbitrary manual tie-breaking. | Store XP transaction timestamps and the tie-break event needed to reproduce the order. |
+
+| 2026-08-15 | Learners see automated results, pass/fail status, submission receipt, and their own submitted responses immediately after completion. Assignment Facilitator Feedback appears after review; Peer Review identity remains anonymous. | Approved | Provide immediate feedback and confidence that work was recorded without compromising review privacy. | UI/API must distinguish automated result, submission status, and human review status. |
