@@ -13,8 +13,19 @@
   }
   async function load(){
     const body=document.getElementById("activityControlBody"),batchId=document.getElementById("activityBatch").value;body.innerHTML="กำลังโหลด…";
-    try{const r=await api({action:"list",batch_id:batchId});body.innerHTML=(r.items||[]).map(x=>`<div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4"><div><div class="font-semibold">${escapeHtml(x.config_json?.title||label[x.activity_type]||x.activity_key)}</div><div class="text-xs text-slate-400">${escapeHtml(x.activity_key)}</div></div><div class="flex items-center gap-2"><label class="text-xs"><input data-enabled="${x.id}" type="checkbox" ${x.enabled?"checked":""}> เปิดใช้</label><select data-gate="${x.id}" class="rounded bg-slate-800 p-2 text-xs"><option value="OPEN" ${x.gate_state==="OPEN"?"selected":""}>เปิดรับ</option><option value="LOCKED" ${x.gate_state==="LOCKED"?"selected":""}>ล็อก</option></select><button data-save="${x.id}" class="rounded-lg bg-cyan-500 px-3 py-2 text-xs font-bold text-slate-950">บันทึก</button></div></div>`).join("")||"<p class='text-slate-400'>ไม่มีการตั้งค่ากิจกรรม</p>";
-      body.querySelectorAll("[data-save]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{await api({action:"update",batch_id:batchId,activity_config_id:b.dataset.save,enabled:body.querySelector(`[data-enabled='${b.dataset.save}']`).checked,gate_state:body.querySelector(`[data-gate='${b.dataset.save}']`).value});await load();}catch(e){alert(e.message);b.disabled=false;}});
+    try{
+      const r=await api({action:"list",batch_id:batchId});const items=r.items||[];
+      body.innerHTML=(items.map(x=>`<div class="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4"><div><div class="font-semibold">${escapeHtml(x.config_json?.title||label[x.activity_type]||x.activity_key)}</div><div class="text-xs text-slate-400">${escapeHtml(x.activity_key)}</div></div><div class="flex items-center gap-2"><label class="text-xs"><input data-enabled="${x.id}" type="checkbox" ${x.enabled?"checked":""}> เปิดใช้</label><select data-gate="${x.id}" class="rounded bg-slate-800 p-2 text-xs"><option value="OPEN" ${x.gate_state==="OPEN"?"selected":""}>เปิดรับ</option><option value="LOCKED" ${x.gate_state==="LOCKED"?"selected":""}>ล็อก</option></select></div></div>`).join("")||"<p class='text-slate-400'>ไม่มีการตั้งค่ากิจกรรม</p>")+ `<div class="sticky bottom-0 mt-5 border-t border-slate-800 bg-slate-950/95 pt-4"><p id="activitySaveMessage" class="mb-2 text-sm"></p><button id="saveAllActivities" class="rounded-xl bg-cyan-500 px-5 py-3 font-bold text-slate-950">บันทึกการเปลี่ยนแปลงทั้งหมด</button></div>`;
+      document.getElementById("saveAllActivities").onclick=async()=>{
+        const button=document.getElementById("saveAllActivities"),note=document.getElementById("activitySaveMessage");button.disabled=true;note.className="mb-2 text-sm text-cyan-300";note.textContent="กำลังบันทึก…";
+        try{
+          for(const item of items){
+            await api({action:"update",batch_id:batchId,activity_config_id:item.id,enabled:body.querySelector(`[data-enabled='${item.id}']`).checked,gate_state:body.querySelector(`[data-gate='${item.id}']`).value});
+          }
+          note.className="mb-2 text-sm text-emerald-300";note.textContent="บันทึกการตั้งค่าทั้งหมดแล้ว";
+          setTimeout(load,700);
+        }catch(e){note.className="mb-2 text-sm text-rose-300";note.textContent=e.message;button.disabled=false;}
+      };
     }catch(e){body.innerHTML=`<p class="text-rose-300">${escapeHtml(e.message)}</p>`;}
   }
   function mount(){if(document.getElementById("activityControlButton")||window.leadershipQuestAccount?.account_type!=="ADMIN")return;const b=document.createElement("button");b.id="activityControlButton";b.className="fixed bottom-5 left-5 z-40 rounded-full bg-cyan-500 px-4 py-3 text-sm font-bold text-slate-950 shadow-lg";b.textContent="จัดการกิจกรรม";b.onclick=open;document.body.appendChild(b);}
