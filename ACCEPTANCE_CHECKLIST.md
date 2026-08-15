@@ -73,7 +73,7 @@
 |---|---|---|---|
 | AC-08 | A Program is selected | Admin opens Quiz Bank | Knowledge Test and Behavioral Criteria are separate views. |
 | AC-09 | Admin creates a knowledge question | They enter 4 choices and one correct answer | Question is saved to the Program bank and available to its Batches. |
-| AC-10 | Admin edits/removes a question | They save the change | Change is reflected according to the approved versioning policy (**TBD**). |
+| AC-10 | Admin edits/removes a question | They save the change | Before Batch start, the current Version may be edited; after Batch start, a new Version is created, the active Batch keeps its Snapshot, and historical results remain unchanged. Deletion is soft. |
 | AC-11 | Admin configures behavioral criteria | They save all five competencies | Strategic Thinking, Coaching, Growth Mindset, Team Execution, and Agility are available for assessment. |
 | AC-11a | A Batch is being configured | Admin enables/disables tests, assessments, peer review, and selects 0–3 Assignments | Only enabled features are created for that Batch and are eligible for Gate control. |
 | AC-11b | Admin uploads an approved knowledge-test or behavioral-criteria CSV/XLSX template | System validates the rows | Admin receives a preview and row-level errors before choosing to commit the import. |
@@ -114,6 +114,7 @@
 | AC-29 | A learner uploads an Assignment file | The file violates the allowed type or size policy | Upload is rejected before submission and the learner sees a clear validation message. |
 | AC-30 | Admin uploads an invalid import file | Validation finds errors | No data is written until errors are resolved and Admin explicitly confirms a clean preview. |
 | AC-31 | A Learner attempts self-review, duplicate review, or inappropriate feedback | The API processes the submission/moderation action | The invalid review is rejected or comment is hidden; Admin identity and reason are retained in the audit log. |
+| AC-32 | An Admin changes Program quiz/criteria after a Batch starts | A learner views or submits an existing activity | The learner uses the Batch Snapshot; results retain the original content Version and answer key. |
 
 ## Production acceptance gates
 
