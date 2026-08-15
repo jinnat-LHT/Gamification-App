@@ -119,6 +119,7 @@
 | AC-32 | An Admin changes Program quiz/criteria after a Batch starts | A learner views or submits an existing activity | The learner uses the Batch Snapshot; results retain the original content Version and answer key. |
 | AC-33 | A Learner starts Post-test | The test is rendered | The Batch question set is unchanged, but question order is randomized for that Learner; option order remains A–D as authored; the presented question order is auditable. |
 | AC-34 | A Learner has passed Post-test | They attempt to open it again | The system blocks retake and shows the passed status. |
+| AC-35 | A Learner submits any enabled activity | The submission is accepted | Automated result/status is visible immediately; Assignment Facilitator Feedback appears after review; Peer Review never reveals reviewer identity. |
 
 ## Production acceptance gates
 
