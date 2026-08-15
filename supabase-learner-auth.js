@@ -30,7 +30,7 @@
         <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">รหัสผ่าน</label>
         <input type="password" id="loginPassword" required autocomplete="current-password"
           class="w-full bg-slate-900/80 border border-cyan-500/40 rounded-xl px-4 py-3 text-sm text-slate-100 focus:outline-none focus:border-cyan-400 transition" />
-        <a href="./" class="mt-2 inline-block text-xs text-cyan-300 hover:text-cyan-200 underline">ลืมรหัสผ่าน? ติดต่อผู้ดูแลโปรแกรม</a>
+        <button type="button" id="forgotPasswordButton" class="mt-2 text-xs text-cyan-300 hover:text-cyan-200 underline">ลืมรหัสผ่าน?</button>
       `;
       email.closest("div").after(wrapper);
     }
@@ -82,6 +82,18 @@
 
   function boot(client) {
     prepareLoginForm();
+
+    byId("forgotPasswordButton")?.addEventListener("click", async () => {
+      const email = byId("loginEmail")?.value?.trim();
+      if (!email) return showLoginMessage("กรอกอีเมลก่อนกดลืมรหัสผ่าน", "text-amber-300");
+      const button = byId("forgotPasswordButton");
+      button.disabled = true; button.textContent = "กำลังส่งอีเมล…";
+      const { error } = await client.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://jinnat-lht.github.io/Gamification-App/set-password.html",
+      });
+      showLoginMessage(error ? error.message : "ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว โปรดตรวจสอบอีเมล", error ? "text-rose-300" : "text-emerald-300");
+      button.disabled = false; button.textContent = "ลืมรหัสผ่าน?";
+    });
 
     window.handleLogin = async (event) => {
       event?.preventDefault();
