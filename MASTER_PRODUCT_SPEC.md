@@ -99,7 +99,10 @@ A disabled activity is not shown to Learners, does not generate XP, and is exclu
 - Knowledge questions use four options (A–D) and one correct answer.
 - Behavioral criteria use five leadership dimensions: Strategic Thinking, Coaching, Growth Mindset, Team Execution, and Agility.
 - Program content is reusable by its Batches.
-- Question/criteria changes after a Batch starts require versioning policy before production implementation; historical results must remain reproducible.
+- When a Batch starts, its Quiz and Behavioral Criteria are locked as a Batch Snapshot.
+- Editing Program questions/criteria creates a new Version. New Batches use the latest Version; an active Batch continues using its Snapshot.
+- Before a Batch starts, Admin may edit the current Version. After it starts, content uses a new Version and existing results retain the original Question Version and answer key.
+- Questions/criteria use Soft Delete; historical records are never physically removed.
 
 ### 6.3 Bulk Import
 Admin can download and upload approved **CSV/XLSX templates** for:
@@ -249,7 +252,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 
 | Decision | Why it matters |
 |---|---|
-| Quiz/criteria versioning after a Batch starts | Protects historical results and reports |
+| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Assignment file types, size limits, retention, and malware scanning | Required for secure storage |
