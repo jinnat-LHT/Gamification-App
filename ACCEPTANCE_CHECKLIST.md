@@ -86,13 +86,14 @@
 | AC-13 | An enabled feature gate is locked | Learner selects it | They cannot submit and see “รอวิทยากรเปิดระบบ”. |
 | AC-14 | Admin opens a gate for the current Batch | Learner refreshes/reopens the page | The relevant task becomes available only to learners in that Batch. |
 | AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | The result is saved once and updates relevant reporting. |
-| AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group and is not exposed beyond authorized scope. |
-| AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text and/or file fields | Submission is stored against the learner and Batch; private files are downloadable only by authorized users; completion reporting updates. |
+| AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group and is not exposed beyond authorized scope; one final submission is allowed per Learner/Batch. |
+| AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text and/or file fields | Submission is stored against the learner and Batch; private files are downloadable only by authorized users; completion reporting updates; XP is awarded once. |
 
 ### D. Learners, attendance, and XP
 
 | ID | Given | When | Then |
 |---|---|---|---|
+| AC-17a | An Assignment has a due date or its Gate closes | Learner submits after the deadline/closure | Submission is marked late or rejected according to the configured policy; Admin may override acceptance per Assignment. |
 | AC-18 | A Batch and Group exist | Admin adds/edits a learner or changes their Group | Learner is listed once in the selected Batch and assigned to one valid Group. |
 | AC-18a | Admin uploads an approved learner-roster CSV/XLSX template | System validates the rows and Admin confirms the preview | Valid learners are added to the selected Batch/Group; duplicate email, missing required columns, and unknown Groups are reported without committing a partial import. |
 | AC-19 | A Group is selected | Admin uses Rapid Group Score | Each current group member receives one +1,000 XP transaction. |
