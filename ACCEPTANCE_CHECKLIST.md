@@ -15,7 +15,7 @@
 - CSV export and Projector Arena Top 10.
 
 ### Deferred from MVP
-- Multi-organization operation (**TBD: confirm whether required for launch**).
+- Multi-organization operation (deferred; MVP launches for one organization).
 - Corporate SSO, password reset, cross-device logout, real-time updates, audit-log viewer, and production monitoring.
 - Any feature not explicitly listed above.
 
@@ -23,25 +23,30 @@
 
 | Capability | Admin | Facilitator | Learner |
 |---|---:|---:|---:|
-| Manage Program, Batch, Group, Quiz Bank | Allow | TBD | Deny |
-| Manage learner roster and attendance | Allow | TBD | Own profile only |
-| Award/adjust XP | Allow | TBD | Deny |
-| Open/close Quest Gates | Allow | TBD | Deny |
-| View reports and export CSV | Allow | TBD | Own results only |
-| Complete tests, peer review, assignments | Optional test account only | Optional test account only | Allow |
-| View leaderboard | Allow | Allow | Allow |
+| Manage Program, Batch, Group, Quiz Bank | Allow | Deny | Deny |
+| Manage learner roster and attendance | Allow | Deny | Own profile only |
+| Award/adjust XP | Allow | Deny | Deny |
+| Open/close Quest Gates | Allow | Deny | Deny |
+| View reports and export CSV | Allow | Deny | Own results only |
+| Complete tests, peer review, assignments | Deny | Deny | Allow |
+| View leaderboard | Allow | Deny | Allow |
 
-**Open decision:** confirm whether Facilitator is a separate operational role at MVP. Until confirmed, Admin is the only management role.
+**Approved MVP policy:** Facilitator is not a role in MVP. Multiple Admin accounts are permitted; each management action must be attributable to the individual Admin account.
 
 ## Locked rules
 
 - Hierarchy: Program → Batch → Group → Learner.
 - Quiz Bank and behavioral criteria belong to Program and are reusable by its Batches.
-- Rankings, XP totals, reports, and CSV exports are isolated to the selected Batch.
+- MVP launches for one organization. Rankings, XP totals, reports, and CSV exports are isolated to the selected Batch.
 - Gate default states: Pre-test and Self-Behavior (Before) open; Post-test, Self-Behavior (After), Peer Review, and Assignments 1–3 closed.
-- Rapid Group Score: +1,000 XP per learner in the selected Group.
+- Rapid Group Score: +1,000 XP per learner in the selected Group, capped at 5 awards per learner per Batch.
 - Attendance: +2,000 XP per attended session; 5 sessions per Batch.
-- Live XP adjustment is an explicit positive or negative amount and must be attributable to an authorized actor.
+- Pre-test and Self-Behavior Before: +500 XP each, once per learner per Batch.
+- Post-test: +1,500 XP once per learner per Batch; this is a completion reward, not a reward based on correct-answer count.
+- Self-Behavior After: +1,000 XP once per learner per Batch.
+- Peer Review: +2,000 XP once per learner per Batch.
+- Assignments #1–#3: +3,000 XP each, once per learner per Batch.
+- Live XP adjustment is an explicit positive or negative amount and must record a reason, authorized Admin account, and time.
 - Executive Pre/Post reporting displays the selected Batch’s cohort average, not individual learner results.
 
 ## Acceptance scenarios
@@ -86,7 +91,7 @@
 | AC-19 | A Group is selected | Admin uses Rapid Group Score | Each current group member receives one +1,000 XP transaction. |
 | AC-20 | Attendance is recorded for a session | Admin checks/unchecks a learner | XP totals reflect +2,000 XP per attended session without duplicate awards. |
 | AC-21 | A learner is selected | Authorized user submits a Live XP adjustment | A signed +/- transaction records amount, reason, actor, and time. |
-| AC-22 | XP changes are made | Any user reloads or another Admin views the Batch | Totals, ranking, and reports are consistent; business data does not rely on localStorage. |
+| AC-22 | XP changes are made | Any user reloads or another Admin views the Batch | Totals, ranking, and reports are consistent; business data does not rely on localStorage, and each change identifies the individual Admin actor. |
 | AC-23 | Projector Arena is opened | Scores change through the approved workflow | The Top 10 uses the current Batch only. |
 
 ### E. Reports and export
@@ -102,7 +107,7 @@
 ## Production acceptance gates
 
 - All relevant scenarios pass in automated or documented UAT tests.
-- APIs enforce role, Organization/Program/Batch scope, and gate state server-side.
-- XP is persisted as immutable/auditable transactions; duplicate submissions are idempotent.
+- APIs enforce individual Admin authentication, Program/Batch scope, and gate state server-side.
+- XP is persisted as immutable/auditable transactions; duplicate submissions are idempotent and Rapid Group Score cannot exceed 5 awards per learner per Batch.
 - No business-critical read/write depends on localStorage.
 - No unresolved Critical or High security findings.
