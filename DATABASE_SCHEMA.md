@@ -373,10 +373,17 @@ Recommended indexes:
    - sample submissions and XP transactions
 8. Run isolation, idempotency, snapshot, and restore tests before staging.
 
-## 14. Open implementation choices
+## 14. Approved implementation stack
 
-- Database engine and migration tool.
-- Object storage provider and malware-scanning service.
+- **Database:** Supabase-managed PostgreSQL.
+- **Identity:** Supabase Auth with individual Admin, Facilitator, and Learner accounts.
+- **Authorization:** PostgreSQL Row-Level Security plus server-side policy checks for role and Client Organization/Program/Batch scope.
+- **Files:** Private Supabase Storage bucket with signed URLs, malware-scan status, and audit events.
+- **Migrations:** Versioned SQL migrations executed through the Supabase CLI in Development → Staging → Production.
+- **Trusted operations:** Server-side Edge Functions/service layer for XP, imports, file access, audit, and idempotent mutations.
+
+## 15. Remaining implementation choices
+
 - Whether snapshots use normalized join tables, immutable JSON, or both.
 - Exact score-release UI fields for Admin versus Learner.
-- Production RPO/RTO validation with the selected hosting provider.
+- Production RPO/RTO validation with the selected hosting configuration.
