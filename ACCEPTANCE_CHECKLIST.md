@@ -38,7 +38,8 @@
 - Hierarchy: Program → Batch → Group → Learner.
 - Quiz Bank and behavioral criteria belong to Program and are reusable by its Batches.
 - MVP launches for one organization. Rankings, XP totals, reports, and CSV exports are isolated to the selected Batch.
-- Gate default states: Pre-test and Self-Behavior (Before) open; Post-test, Self-Behavior (After), Peer Review, and Assignments 1–3 closed.
+- Feature configuration is set per Batch: Pre-test, Post-test, Self-Behavior Before/After, Peer Review, and 0–3 Assignments can each be enabled or disabled. Disabled features are unavailable to learners and excluded from KPI/chart denominators.
+- Gate default states apply only to enabled features: Pre-test and Self-Behavior (Before) open; Post-test, Self-Behavior (After), Peer Review, and enabled Assignments closed.
 - Rapid Group Score: +1,000 XP per learner in the selected Group, capped at 5 awards per learner per Batch.
 - Attendance: +2,000 XP per attended session; 5 sessions per Batch.
 - Pre-test and Self-Behavior Before: +500 XP each, once per learner per Batch.
@@ -71,13 +72,14 @@
 | AC-09 | Admin creates a knowledge question | They enter 4 choices and one correct answer | Question is saved to the Program bank and available to its Batches. |
 | AC-10 | Admin edits/removes a question | They save the change | Change is reflected according to the approved versioning policy (**TBD**). |
 | AC-11 | Admin configures behavioral criteria | They save all five competencies | Strategic Thinking, Coaching, Growth Mindset, Team Execution, and Agility are available for assessment. |
+| AC-11a | A Batch is being configured | Admin enables/disables tests, assessments, peer review, and selects 0–3 Assignments | Only enabled features are created for that Batch and are eligible for Gate control. |
 
 ### C. Gatekeeper and learner flow
 
 | ID | Given | When | Then |
 |---|---|---|---|
-| AC-12 | A new Batch is created | Learner opens assessment area | Pre-test and Self-Behavior Before are available; all other specified gates are locked. |
-| AC-13 | A gate is locked | Learner selects it | They cannot submit and see “รอวิทยากรเปิดระบบ”. |
+| AC-12 | A new Batch is created with enabled learning features | Learner opens assessment area | Enabled Pre-test and Self-Behavior Before are available; enabled Post-test, Self-Behavior After, Peer Review, and Assignments are locked. Disabled features are not shown. |
+| AC-13 | An enabled feature gate is locked | Learner selects it | They cannot submit and see “รอวิทยากรเปิดระบบ”. |
 | AC-14 | Admin opens a gate for the current Batch | Learner refreshes/reopens the page | The relevant task becomes available only to learners in that Batch. |
 | AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | The result is saved once and updates relevant reporting. |
 | AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group and is not exposed beyond authorized scope. |
@@ -100,7 +102,7 @@
 |---|---|---|---|
 | AC-24 | A Batch has learners/results | Admin opens Reports | KPI cards show learner count, cohort knowledge growth, attendance rate, and total Batch XP. |
 | AC-25 | Pre/Post results exist | Admin views the Knowledge chart | It shows cohort-average Pre and Post values for the selected Batch, never individual rows. |
-| AC-26 | Behavioral, attendance, assignment, XP, and level data exist | Admin views Reports | Six charts render from selected-Batch data: Knowledge, Competency Gap, Attendance Trend, Assignment Completion, Level Distribution, Group Average XP. |
+| AC-26 | Data exists for the enabled features | Admin views Reports | Applicable charts render from selected-Batch data. A disabled test/assessment/assignment is hidden or marked N/A and is never treated as a zero score/completion rate. |
 | AC-27 | A Batch is selected | Admin exports CSV | File includes approved learner-level fields and uses UTF-8 BOM for Thai characters. |
 | AC-28 | A user lacks management permission | They request data outside their scope | Server rejects the request; the UI does not expose it. |
 
