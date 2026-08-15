@@ -15,7 +15,7 @@
 - CSV export, bulk CSV/XLSX import, and Projector Arena Top 10.
 
 ### Deferred from MVP
-- Multi-organization operation (deferred; MVP launches for one organization).
+- Client-organization self-service administration (deferred; provider Admins manage client organizations in MVP).
 - Corporate SSO, password reset, cross-device logout, real-time updates, audit-log viewer, and production monitoring.
 - Any feature not explicitly listed above.
 
@@ -23,7 +23,7 @@
 
 | Capability | Admin | Facilitator | Learner |
 |---|---:|---:|---:|
-| Manage Program, Batch, Group, Quiz Bank | Allow | Deny | Deny |
+| Manage Program, Batch, Group, Quiz Bank within assigned Client Organizations | Allow | Deny | Deny |
 | Manage learner roster and attendance | Allow | Deny | Own profile only |
 | Award/adjust XP | Allow | Deny | Deny |
 | Open/close Quest Gates | Allow | Deny | Deny |
@@ -37,7 +37,7 @@
 
 - Hierarchy: Program → Batch → Group → Learner.
 - Quiz Bank and behavioral criteria belong to Program and are reusable by its Batches.
-- MVP launches for one organization. Rankings, XP totals, reports, and CSV exports are isolated to the selected Batch.
+- The platform has one provider organization and supports multiple Client Organizations. Rankings, XP totals, reports, and CSV exports are isolated to the selected Client Organization and Batch.
 - Feature configuration is set per Batch: Pre-test, Post-test, Self-Behavior Before/After, Peer Review, and 0–3 Assignments can each be enabled or disabled. Disabled features are unavailable to learners and excluded from KPI/chart denominators.
 - Gate default states apply only to enabled features: Pre-test and Self-Behavior (Before) open; Post-test, Self-Behavior (After), Peer Review, and enabled Assignments closed.
 - Admin can bulk-import learner rosters, knowledge-test questions, and behavioral-assessment criteria from approved CSV/XLSX templates. Import runs as validate → preview → confirm; invalid rows are reported and no partial import is committed.
@@ -62,7 +62,7 @@
 | AC-01 | An Admin is signed in | They create a Program | Program name/details are saved and visible. |
 | AC-02 | A Program exists | Admin creates a Batch under it | Batch belongs to exactly that Program. |
 | AC-03 | A Batch exists | Admin creates a Group | Group belongs to exactly that Batch. |
-| AC-04 | Two Batches exist | Admin views a Batch report/leaderboard | Only learners, XP, and results from that Batch are included. |
+| AC-04 | Two Batches or Client Organizations exist | Admin views a Batch report/leaderboard | Only learners, XP, and results from the selected Client Organization and Batch are included. |
 | AC-05 | Any Admin page is open | Admin changes Program then Batch in the context bar | All context-bound content refreshes for the selection. |
 | AC-06 | A Batch is selected | Admin views the context bar | Group count, member count, and Batch XP total are shown. |
 | AC-07 | A Group contains learners/data | Admin attempts deletion | System prevents destructive deletion or requires a safe-delete flow that preserves auditability. |
@@ -116,7 +116,7 @@
 ## Production acceptance gates
 
 - All relevant scenarios pass in automated or documented UAT tests.
-- APIs enforce individual Admin authentication, Program/Batch scope, and gate state server-side.
+- APIs enforce individual Admin authentication, Client Organization/Program/Batch scope, and gate state server-side.
 - XP is persisted as immutable/auditable transactions; duplicate submissions are idempotent and Rapid Group Score cannot exceed 5 awards per learner per Batch.
 - No business-critical read/write depends on localStorage.
 - No unresolved Critical or High security findings.
