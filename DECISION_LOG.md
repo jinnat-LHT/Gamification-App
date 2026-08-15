@@ -21,3 +21,5 @@
 1. Add a row before implementing a behavior that differs from the spec.
 2. Mark the row **Approved** only when the product owner confirms it.
 3. Link the implementing PR and acceptance-test evidence once available.
+
+| 2026-08-15 | Test and assessment activities allow one final submission; Assignment submissions may be revised until Gate close/due date, with XP awarded once on first successful submission. Late acceptance is configurable by Assignment. | Approved | Preserves assessment integrity while allowing practical work to improve through revision. | Data model must retain submission versions/status, final-submission marker, due-date/late status, and idempotent XP award. |
