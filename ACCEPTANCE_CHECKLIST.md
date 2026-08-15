@@ -111,6 +111,7 @@
 | AC-26 | Data exists for the enabled features | Admin views Reports | Applicable charts render from selected-Batch data. A disabled test/assessment/assignment is hidden or marked N/A and is never treated as a zero score/completion rate. |
 | AC-27 | A Batch is selected | Admin exports CSV | File includes approved learner-level fields and uses UTF-8 BOM for Thai characters. |
 | AC-28 | A user lacks management permission | They request data outside their scope | Server rejects the request; the UI does not expose it. |
+| AC-28a | A Facilitator is assigned to a Batch | They review work or attendance | They can work within the assigned Batch but cannot add/edit/delete/import Learners, Groups, or permissions. |
 | AC-29 | A learner uploads an Assignment file | The file violates the allowed type, size, count, or malware policy | Upload is rejected before submission and the learner sees a clear validation message. |
 | AC-29a | An authorized user requests an Assignment file | The system creates a download URL | The URL is short-lived and access is limited to the submitting Learner and permitted Admins. |
 | AC-30 | Admin uploads an invalid import file | Validation finds errors | No data is written until errors are resolved and Admin explicitly confirms a clean preview. |
