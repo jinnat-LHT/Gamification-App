@@ -85,7 +85,7 @@
 | AC-12 | A new Batch is created with enabled learning features | Learner opens assessment area | Enabled Pre-test and Self-Behavior Before are available; enabled Post-test, Self-Behavior After, Peer Review, and Assignments are locked. Disabled features are not shown. |
 | AC-13 | An enabled feature gate is locked | Learner selects it | They cannot submit and see “รอวิทยากรเปิดระบบ”. |
 | AC-14 | Admin opens a gate for the current Batch | Learner refreshes/reopens the page | The relevant task becomes available only to learners in that Batch. |
-| AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | The result is saved once and updates relevant reporting. |
+| AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | Self-Behavior saves once; Post-test requires ≥80%, permits retest while failed, saves every attempt, and locks after the first passing attempt. XP is awarded once on pass. |
 | AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group; the recipient cannot see reviewer identity; one final submission is allowed per Learner/Batch. |
 | AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text and/or file fields | Submission is stored against the learner and Batch; status is tracked without a numeric grade; private files are downloadable only by authorized users; completion reporting updates; XP is awarded once. |
 
@@ -118,6 +118,7 @@
 | AC-31 | A Learner attempts self-review, duplicate review, or inappropriate feedback | The API processes the submission/moderation action | The invalid review is rejected or comment is hidden; Admin identity and reason are retained in the audit log. |
 | AC-32 | An Admin changes Program quiz/criteria after a Batch starts | A learner views or submits an existing activity | The learner uses the Batch Snapshot; results retain the original content Version and answer key. |
 | AC-33 | A Learner starts Post-test | The test is rendered | The Batch question set is unchanged, but question order is randomized for that Learner; option order remains A–D as authored; the presented question order is auditable. |
+| AC-34 | A Learner has passed Post-test | They attempt to open it again | The system blocks retake and shows the passed status. |
 
 ## Production acceptance gates
 
