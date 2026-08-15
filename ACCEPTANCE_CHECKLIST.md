@@ -107,7 +107,7 @@
 | ID | Given | When | Then |
 |---|---|---|---|
 | AC-24 | A Batch has learners/results | Admin opens Reports | KPI cards show learner count, cohort knowledge growth, attendance rate, and total Batch XP. |
-| AC-25 | Pre/Post results exist | Admin views the Knowledge chart | It shows cohort-average Pre and Post values for the selected Batch, never individual rows. |
+| AC-25 | Pre/Post results exist | Admin views the Knowledge chart | It shows cohort-average Pre and Post values for the selected Batch, never individual rows; each Learner’s Post value is their first passing Attempt (≥80%). |
 | AC-26 | Data exists for the enabled features | Admin views Reports | Applicable charts render from selected-Batch data. A disabled test/assessment/assignment is hidden or marked N/A and is never treated as a zero score/completion rate. |
 | AC-27 | A Batch is selected | Admin exports CSV | File includes approved learner-level fields and uses UTF-8 BOM for Thai characters. |
 | AC-28 | A user lacks management permission | They request data outside their scope | Server rejects the request; the UI does not expose it. |
