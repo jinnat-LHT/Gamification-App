@@ -72,7 +72,7 @@
 
     const { data: enrollments, error: enrollmentError } = await client
       .from("batch_learners")
-      .select("batch_id, group:groups(name, external_code), batch:batches(name, external_code, start_date, end_date)")
+      .select("id, batch_id, group:groups(name, external_code), batch:batches(name, external_code, start_date, end_date)")
       .eq("learner_id", userId)
       .in("enrollment_status", ["INVITED", "ACTIVE"])
       .limit(1);
@@ -82,6 +82,7 @@
     return {
       ...data,
       batch_id: enrollment?.batch_id || null,
+      batch_learner_id: enrollment?.id || null,
       group_name: enrollment?.group?.name || enrollment?.group?.external_code || "ยังไม่มีกลุ่ม",
       batch_name: enrollment?.batch?.name || enrollment?.batch?.external_code || "ยังไม่มีกำหนดรุ่น",
     };
@@ -119,10 +120,44 @@
     byId("tab-dashboard")?.prepend(card);
   }
 
+  async function showProgressSummary(client, account) {
+    if (!account.batch_learner_id) return;
+    const [xpResult, submissionsResult] = await Promise.all([
+      client.from("xp_transactions").select("amount").eq("batch_learner_id", account.batch_learner_id),
+      client.from("submissions").select("activity_type, status, submission_attempts(score_percent, attempt_number, submitted_at)").eq("batch_learner_id", account.batch_learner_id),
+    ]);
+    if (xpResult.error || submissionsResult.error) return;
+
+    const totalXp = (xpResult.data || []).reduce((total, row) => total + Number(row.amount || 0), 0);
+    const latestScore = (type) => {
+      const submission = (submissionsResult.data || []).find((item) => item.activity_type === type);
+      const attempts = submission?.submission_attempts || [];
+      if (!attempts.length) return null;
+      const latest = [...attempts].sort((a, b) => Number(b.attempt_number) - Number(a.attempt_number))[0];
+      return latest.score_percent == null ? null : Number(latest.score_percent);
+    };
+    const preScore = latestScore("PRE_TEST");
+    const postScore = latestScore("POST_TEST");
+    const completed = (submissionsResult.data || []).filter((item) => item.status !== "NOT_STARTED").length;
+
+    if (byId("dashTotalXp")) byId("dashTotalXp").textContent = `${totalXp.toLocaleString()} XP`;
+    if (byId("dashLevelXpText")) byId("dashLevelXpText").textContent = "คะแนนจริงจากกิจกรรม";
+    if (byId("dashPreScoreText")) byId("dashPreScoreText").textContent = preScore == null ? "-" : `${preScore.toFixed(0)}%`;
+    if (byId("dashPostScoreText")) byId("dashPostScoreText").textContent = postScore == null ? "-" : `${postScore.toFixed(0)}%`;
+
+    byId("liveProgressSummary")?.remove();
+    const card = document.createElement("section");
+    card.id = "liveProgressSummary";
+    card.className = "glass-card neon-frame-emerald p-5 rounded-2xl";
+    card.innerHTML = `<div class="flex items-center justify-between gap-3"><div><h3 class="font-bold">ความคืบหน้าของคุณ</h3><p class="text-xs text-slate-400">ข้อมูลจริงจากผลการทำกิจกรรม</p></div><span class="text-emerald-300 font-semibold">${completed} กิจกรรมเริ่มแล้ว</span></div><div class="grid grid-cols-3 gap-3 mt-4 text-center"><div class="rounded-xl bg-slate-900/70 p-3"><div class="text-xs text-slate-400">XP จริง</div><div class="font-bold text-amber-300">${totalXp.toLocaleString()}</div></div><div class="rounded-xl bg-slate-900/70 p-3"><div class="text-xs text-slate-400">Pre-test</div><div class="font-bold text-cyan-300">${preScore == null ? "-" : preScore.toFixed(0) + "%"}</div></div><div class="rounded-xl bg-slate-900/70 p-3"><div class="text-xs text-slate-400">Post-test</div><div class="font-bold text-emerald-300">${postScore == null ? "-" : postScore.toFixed(0) + "%"}</div></div></div>`;
+    byId("tab-dashboard")?.prepend(card);
+  }
+
   function showLearner(client, account) {
     window.leadershipQuestLearner = account;
     if (typeof window.loginUser === "function") window.loginUser(learnerState(account), false);
     showActivityOverview(client, account);
+    showProgressSummary(client, account);
   }
 
   function signOutAndShowError(client, message) {
