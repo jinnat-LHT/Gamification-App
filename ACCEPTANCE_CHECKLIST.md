@@ -47,7 +47,7 @@
 - Post-test: +1,500 XP once per learner per Batch; this is a completion reward, not a reward based on correct-answer count.
 - Self-Behavior After: +1,000 XP once per learner per Batch.
 - Peer Review: +2,000 XP once per learner per Batch.
-- Each enabled Assignment is configurable by Batch with one submission mode: text response, file upload, URL/link, or text + file upload. Required fields are set per Assignment.
+- Each enabled Assignment is configurable by Batch with one submission mode: text response, file upload, or text + file upload. Required fields are set per Assignment.
 - Assignment file uploads must use private object storage and authorized download URLs; file-size limits, allowed formats, retention period, and malware-scanning policy are **TBD**.
 - Assignments #1–#3: +3,000 XP each, once per learner per Batch.
 - Live XP adjustment is an explicit positive or negative amount and must record a reason, authorized Admin account, and time.
@@ -87,7 +87,7 @@
 | AC-14 | Admin opens a gate for the current Batch | Learner refreshes/reopens the page | The relevant task becomes available only to learners in that Batch. |
 | AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | The result is saved once and updates relevant reporting. |
 | AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group and is not exposed beyond authorized scope. |
-| AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text, file, and/or URL fields | Submission is stored against the learner and Batch; private files are downloadable only by authorized users; completion reporting updates. |
+| AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text and/or file fields | Submission is stored against the learner and Batch; private files are downloadable only by authorized users; completion reporting updates. |
 
 ### D. Learners, attendance, and XP
 
