@@ -72,7 +72,7 @@
 
     const { data: enrollments, error: enrollmentError } = await client
       .from("batch_learners")
-      .select("batch_id, group:groups(name, external_code), batch:batches(name, external_code, start_date, end_date)")
+      .select("id, batch_id, group:groups(name, external_code), batch:batches(name, external_code, start_date, end_date)")
       .eq("learner_id", userId)
       .in("enrollment_status", ["INVITED", "ACTIVE"])
       .limit(1);
