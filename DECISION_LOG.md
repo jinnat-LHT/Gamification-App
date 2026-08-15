@@ -1,0 +1,45 @@
+# Leadership Quest — Decision Log
+
+> Record approved deviations and product decisions. New entries require owner, date, and impact.
+
+| Date | Decision | Status | Rationale | Impact |
+|---|---|---|---|---|
+| 2026-08-14 | Remove Quick Role Switcher / Admin Learner Preview. | Approved | Admin users do not need this feature in their working flow. | Deviation from the original Admin Portal Spec; learner flow is tested through the dedicated learner frontend. |
+| 2026-08-14 | Pre/Post report displays cohort averages for the selected Batch, not individual learner comparison. | Approved | Executive report should focus on cohort-level outcomes. | Knowledge chart and KPI must aggregate data; learner-level detail remains restricted. |
+| 2026-08-15 | Keep Admin and Learner frontends as separate HTML prototype files. | Approved for prototype | Enables independent frontend review while production architecture is planned. | Production integration must replace localStorage and mock login with API/authentication. |
+| 2026-08-15 | One provider organization operates the platform; MVP supports multiple Client Organizations, each with multiple Programs. | Approved (revised) | The provider needs to run leadership programs for multiple customers without mixing data. | Database and authorization must enforce Client Organization boundaries from the first release; client self-service administration is deferred. |
+| 2026-08-15 | Add Facilitator as an MVP role. Facilitators can review work, view assigned learner data read-only, manage attendance/gates within assigned scope, but cannot modify/import learners, groups, permissions, or Quiz Bank. | Approved (revised) | A dedicated role is needed for people who check assignments and run learning sessions. | Assign Facilitator access by Client Organization/Program/Batch and audit all actions. |
+| 2026-08-15 | Approve XP rules: Pre-test +500; Self-Behavior Before +500; Post-test +1,500; Self-Behavior After +1,000; Peer Review +2,000; Assignments #1–3 +3,000 each; Rapid Group Score capped at 5 awards/learner/Batch. | Approved | Balance participation and applied learning while preventing in-class bonus scoring from dominating rankings. | Persist as auditable transactions; principal activities award XP once per learner per Batch; Post-test XP is completion-based. |
+| 2026-08-15 | Configure enabled learning features per Batch: tests, self-assessments, peer review, and 0–3 Assignments may be disabled. Gate controls apply only to enabled features. | Approved | Different training Batches can have different learning activities without misleading reporting. | UI/API must hide disabled features; Reports must exclude them from denominators and show N/A where relevant. |
+| 2026-08-15 | Each enabled Assignment may require a text response, file upload, or text + file. Assignment links are not supported in MVP. | Approved | Support practical work submissions without forcing every Batch into the same format, while avoiding inaccessible external links. | Production architecture needs private file storage, authorized download URLs, validation, and malware scanning; upload limits and retention remain TBD. |
+| 2026-08-15 | Provide bulk CSV/XLSX import templates for learner rosters, knowledge-test questions, and behavioral-assessment criteria. | Approved | Reduce manual entry while keeping structured data reliable. | Import must validate, preview errors, require explicit confirmation, prevent duplicates, and avoid partial writes. Free-form Word/PDF import is not an MVP data-entry path. |
+| TBD | Approve quiz/versioning policy when Program questions change after a Batch starts. | Pending | Changes must not corrupt historical assessments. | Blocks database versioning and report reproducibility. |
+| TBD | Define retention, backup, and audit-log requirements. | Pending | Required for production data governance. | Blocks operational readiness and compliance planning. |
+
+## Decision process
+
+1. Add a row before implementing a behavior that differs from the spec.
+2. Mark the row **Approved** only when the product owner confirms it.
+3. Link the implementing PR and acceptance-test evidence once available.
+
+| 2026-08-15 | Test and assessment activities allow one final submission; Assignment submissions may be revised until Gate close/due date, with XP awarded once on first successful submission. Late acceptance is configurable by Assignment. | Approved | Preserves assessment integrity while allowing practical work to improve through revision. | Data model must retain submission versions/status, final-submission marker, due-date/late status, and idempotent XP award. |
+
+| 2026-08-15 | Peer Review is anonymous to the recipient; Admin can identify reviewers for audit/moderation. Self-review and duplicate review are rejected. | Approved | Protect honest feedback while preserving operational accountability. | Store reviewer identity privately, enforce uniqueness server-side, and preserve moderation history. |
+
+| 2026-08-15 | Lock Quiz/Assessment content as a Batch Snapshot at Batch start; later edits create a new Program Version, with Soft Delete for old content. | Approved | Preserve historical assessment integrity while allowing reusable content to evolve. | Store content Version and answer key references on each result; active Batches do not silently change. |
+
+| 2026-08-15 | Assignment files: PDF/DOC/DOCX/PPT/PPTX/XLS/XLSX/PNG/JPG only; max 20 MB/file, max 3 files/Assignment; malware scan; private storage; short-lived authorized URLs; retain at least 1 year after Batch completion. | Approved | Provide practical submission flexibility while controlling security and storage risk. | File service must enforce type/size/count, scan status, retention job, and download audit. |
+
+| 2026-08-15 | Assignments are not numerically scored; Facilitator tracks review status and feedback, while completion XP remains separate. Post-test uses the same Batch question set but randomizes question order only per Learner; option order remains as authored. | Approved | Keep practical work qualitative and preserve comparable knowledge measurement while reducing answer-copying. | Store presentation order and content Version with each result; Assignment status/feedback is separate from XP. |
+
+| 2026-08-15 | Post-test requires ≥80%; failed Learners may retest while the Gate is open, but a passed Learner is locked from retaking. Each attempt is retained; XP is awarded once on first pass. | Approved | Give Learners a fair opportunity to pass without allowing repeated attempts to inflate results or XP. | Store attempt history, pass state, and first-passing attempt separately. |
+
+| 2026-08-15 | Executive Post-test reporting uses each Learner’s first passing Attempt (≥80%), aggregated as the selected Batch’s cohort average. | Approved | Reflect the achieved passing outcome while keeping the report at cohort level. | Store first-passing score separately from all attempts; do not expose individual rows in the executive chart. |
+
+| 2026-08-15 | Leaderboard ties use the earlier timestamp of reaching the tied XP total; identical timestamps fall back to normalized display-name alphabetical order. | Approved | Make rankings deterministic and reward earlier achievement without arbitrary manual tie-breaking. | Store XP transaction timestamps and the tie-break event needed to reproduce the order. |
+
+| 2026-08-15 | Learners see automated results, pass/fail status, submission receipt, and their own submitted responses immediately after completion. Assignment Facilitator Feedback appears after review; Peer Review identity remains anonymous. | Approved | Provide immediate feedback and confidence that work was recorded without compromising review privacy. | UI/API must distinguish automated result, submission status, and human review status. |
+
+| 2026-08-15 | Audit Log is immutable with 2-year retention; Soft Delete protects referenced records; daily backups retain 30 days, monthly backups 12 months, quarterly restore tests; MVP target RPO 24h/RTO 8h. | Approved | Provide traceability and recoverability appropriate for enterprise learning operations. | Implement audit, retention jobs, backup monitoring, restore evidence, and approved export-before-delete workflow. |
+
+| 2026-08-15 | Use Supabase PostgreSQL for the database, Supabase Auth for identity, private Supabase Storage for Assignment files, RLS plus server-side policies for authorization, and versioned SQL migrations. | Approved | Reduce infrastructure overhead while providing PostgreSQL integrity, secure storage, Auth, and multi-client data isolation. | Trusted mutations such as XP, imports, file authorization, and audit writes must run through a server-side service layer; staging and production projects remain separate. |
