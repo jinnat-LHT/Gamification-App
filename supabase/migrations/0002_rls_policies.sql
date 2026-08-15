@@ -58,8 +58,9 @@ as $$
       and (
         ra.role = 'ADMIN'
         or ra.role = 'FACILITATOR'
-      );
-$$;
+      )
+  );
+$;
 
 create or replace function public.has_program_scope(p_program_id uuid)
 returns boolean
