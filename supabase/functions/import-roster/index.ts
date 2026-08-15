@@ -15,7 +15,7 @@ type ValidatedRow = {
   group_id: string;
 };
 
-const appUrl = "https://jinnat-lht.github.io/Gamification-App/";
+const appUrl = "https://jinnat-lht.github.io/Gamification-App/set-password.html";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "https://jinnat-lht.github.io",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
