@@ -131,12 +131,41 @@ as $$
   );
 $$;
 
+create or replace function public.has_admin_batch_scope(p_batch_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+  select exists (
+    select 1
+    from public.batches b
+    join public.programs p on p.id = b.program_id
+    join public.client_organizations co on co.id = p.client_organization_id
+    join public.role_assignments ra
+      on ra.user_id = auth.uid()
+     and ra.role = 'ADMIN'
+     and ra.revoked_at is null
+     and (
+       (ra.scope_type = 'BATCH' and ra.batch_id = b.id)
+       or (ra.scope_type = 'PROGRAM' and ra.program_id = p.id)
+       or (ra.scope_type = 'CLIENT_ORGANIZATION' and ra.client_organization_id = co.id)
+       or (ra.scope_type = 'PROVIDER' and ra.provider_organization_id = co.provider_organization_id)
+     )
+    join public.user_accounts ua on ua.id = ra.user_id
+    where b.id = p_batch_id
+      and ua.status in ('INVITED', 'ACTIVE')
+  );
+$;
+
 -- Helper functions are intentionally not exposed as direct client RPC endpoints.
 revoke all on function public.current_user_account_id() from public;
 revoke all on function public.is_provider_admin(uuid) from public;
 revoke all on function public.has_client_scope(uuid) from public;
 revoke all on function public.has_program_scope(uuid) from public;
 revoke all on function public.has_batch_scope(uuid) from public;
+revoke all on function public.has_admin_batch_scope(uuid) from public;
 revoke all on function public.is_batch_learner(uuid) from public;
 
 -- Identity and scope reads.
@@ -193,7 +222,7 @@ using (
       )
   )
 )
-with check (public.has_program_scope(client_organization_id));
+with check (public.has_client_scope(client_organization_id));
 
 drop policy if exists batches_select on public.batches;
 create policy batches_select on public.batches
@@ -204,13 +233,7 @@ drop policy if exists batches_admin_write on public.batches;
 create policy batches_admin_write on public.batches
 for all to authenticated
 using (
-  public.has_program_scope(program_id)
-  and exists (
-    select 1 from public.role_assignments ra
-    where ra.user_id = auth.uid()
-      and ra.role = 'ADMIN'
-      and ra.revoked_at is null
-  )
+  public.has_admin_batch_scope(id)
 )
 with check (public.has_program_scope(program_id));
 
@@ -222,8 +245,8 @@ using (public.has_batch_scope(batch_id) or public.is_batch_learner(batch_id));
 drop policy if exists groups_admin_write on public.groups;
 create policy groups_admin_write on public.groups
 for all to authenticated
-using (public.has_batch_scope(batch_id))
-with check (public.has_batch_scope(batch_id));
+using (public.has_admin_batch_scope(batch_id))
+with check (public.has_admin_batch_scope(batch_id));
 
 drop policy if exists batch_learners_select on public.batch_learners;
 create policy batch_learners_select on public.batch_learners
@@ -234,13 +257,7 @@ drop policy if exists batch_learners_admin_write on public.batch_learners;
 create policy batch_learners_admin_write on public.batch_learners
 for all to authenticated
 using (
-  public.has_batch_scope(batch_id)
-  and exists (
-    select 1 from public.role_assignments ra
-    where ra.user_id = auth.uid()
-      and ra.role = 'ADMIN'
-      and ra.revoked_at is null
-  )
+  public.has_admin_batch_scope(batch_id)
 )
 with check (public.has_batch_scope(batch_id));
 
