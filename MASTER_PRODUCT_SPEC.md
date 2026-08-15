@@ -211,7 +211,8 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 
 - Executive Pre/Post reporting uses the **cohort average of the selected Batch**; it does not expose individual learner comparisons.
 - Learners can see their own Pre/Post and self-assessment growth.
-- Peer-review visibility policy is **TBD**: decide whether feedback is anonymous to the recipient and whether Admin can see reviewer identity.
+- Peer Review is anonymous to the recipient: the reviewed Learner does not see the reviewer’s name. Admin can see reviewer identity for audit and complaint handling.
+- A Learner cannot review themselves or submit duplicate reviews for the same peer/Batch. Admin can hide/remove inappropriate comments, while preserving the moderation audit record.
 - CSV export includes only fields authorized for Admin use, with UTF-8 BOM for Thai text.
 - Report formulas use only enabled activities and must retain data-version references for reproducibility.
 
@@ -250,7 +251,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 |---|---|
 | Quiz/criteria versioning after a Batch starts | Protects historical results and reports |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Peer-review anonymity and moderation | Protects fairness and privacy |
+| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Assignment file types, size limits, retention, and malware scanning | Required for secure storage |
 | Data retention, backup, recovery target, and audit-log retention | Required for governance and operations |
 | Leaderboard tie-breaking rule | Makes rankings deterministic |
