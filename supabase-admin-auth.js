@@ -49,6 +49,7 @@
     byId("contextBar")?.classList.remove("hidden");
     byId("gameTicker")?.classList.remove("hidden");
 
+    window.leadershipQuestAccount = account;
     const name = account.display_name || account.email;
     if (byId("userName")) byId("userName").textContent = name;
     if (byId("userRoleBadge")) byId("userRoleBadge").textContent = "Administrator";
@@ -119,6 +120,7 @@
 
     window.logout = async () => {
       await client.auth.signOut();
+      window.leadershipQuestAccount = null;
       location.reload();
     };
 
