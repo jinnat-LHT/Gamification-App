@@ -20,6 +20,15 @@ Deno.serve(async(req)=>{
   const action=String(payload.action??"prepare");
   const {data:enrollment}=await admin.from("batch_learners").select("id,batch_id").eq("learner_id",user.id).in("enrollment_status",["INVITED","ACTIVE"]).limit(1).maybeSingle();
   if(!enrollment) return out({error:"No active batch enrolment"},403);
+  if(action==="status"){
+    const submissions=await admin.from("submissions").select("id,activity_config_id,status,last_submitted_at").eq("batch_learner_id",enrollment.id).eq("activity_type","ASSIGNMENT").order("last_submitted_at",{ascending:false});
+    if(submissions.error) return out({error:"Could not load assignment status"},500);
+    const ids=(submissions.data??[]).map((s:any)=>s.id);
+    const feedback=ids.length?await admin.from("facilitator_feedback").select("submission_id,status,feedback_text,created_at").in("submission_id",ids).is("deleted_at",null).order("created_at",{ascending:false}):{data:[]};
+    const feedbackBySubmission=new Map<string,any>();
+    for(const row of feedback.data??[]) if(!feedbackBySubmission.has(row.submission_id)) feedbackBySubmission.set(row.submission_id,row);
+    return out({items:(submissions.data??[]).map((s:any)=>({...s,feedback:feedbackBySubmission.get(s.id)??null}))});
+  }
   const activityConfigId=String(payload.activity_config_id??"");
   const {data:config}=await admin.from("batch_activity_configs").select("id,enabled,gate_state,activity_key,config_json").eq("id",activityConfigId).eq("batch_id",enrollment.batch_id).eq("activity_type","ASSIGNMENT").maybeSingle();
   if(!config?.enabled||config.gate_state!=="OPEN") return out({error:"Assignment is not open"},403);
