@@ -77,6 +77,17 @@
     return data;
   }
 
+  async function commitRoster(rows) {
+    const client = window.leadershipQuestSupabase;
+    if (!client) throw new Error("โปรดเข้าสู่ระบบใหม่ก่อนนำเข้า");
+    const { data, error } = await client.functions.invoke("import-roster", {
+      body: { action: "commit", batch_code: batchCode, rows }
+    });
+    if (error) throw new Error(error.message);
+    if (data?.error) throw new Error(data.error);
+    return data;
+  }
+
   function openModal() {
     let modal = document.getElementById("rosterImportModal");
     if (modal) return modal.classList.remove("hidden");
@@ -111,7 +122,20 @@
           return;
         }
         setResult(`<p class="text-emerald-300 font-semibold">ผ่านการตรวจสอบ ${escapeHtml(data.valid_rows)} รายการ</p>
-          <p class="mt-2 text-slate-400">ข้อมูลยังไม่ถูกบันทึกหรือส่งคำเชิญ จนกว่าจะกดยืนยันในขั้นถัดไป</p>`);
+          <p class="mt-2 text-slate-400">ข้อมูลยังไม่ถูกบันทึกหรือส่งคำเชิญจนกว่าจะยืนยัน</p>
+          <button id="confirmRosterImport" class="mt-4 rounded-xl bg-emerald-500 px-4 py-2 font-semibold text-slate-950 hover:bg-emerald-400">ยืนยันและส่งคำเชิญ ${escapeHtml(data.valid_rows)} คน</button>`);
+        document.getElementById("confirmRosterImport").onclick = async () => {
+          const button = document.getElementById("confirmRosterImport");
+          button.disabled = true;
+          button.textContent = "กำลังบันทึกและส่งคำเชิญ…";
+          try {
+            const committed = await commitRoster(rows);
+            setResult(`<p class="text-emerald-300 font-semibold">นำเข้าและส่งคำเชิญสำเร็จ ${escapeHtml(committed.invited_count)} คน</p>
+              <p class="mt-2 text-slate-400">ระบบบันทึกเลขที่งาน ${escapeHtml(committed.import_job_id)} ไว้ใน audit แล้ว</p>`);
+          } catch (commitError) {
+            setResult(`<p class="text-rose-300">ยืนยันไม่สำเร็จ: ${escapeHtml(commitError.message || "เกิดข้อผิดพลาด")}</p>`);
+          }
+        };
       } catch (error) {
         setResult(`<p class="text-rose-300">ตรวจสอบไม่สำเร็จ: ${escapeHtml(error.message || "เกิดข้อผิดพลาด")}</p>`);
       }
