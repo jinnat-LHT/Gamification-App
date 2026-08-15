@@ -217,7 +217,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 
 ## 9. Reporting, privacy, and learning outcomes
 
-- Executive Pre/Post reporting uses the **cohort average of the selected Batch**; it does not expose individual learner comparisons.
+- Executive Pre/Post reporting uses the **cohort average of the selected Batch**; it does not expose individual learner comparisons. For Post-test, each Learner contributes the score from their first passing Attempt (≥80%).
 - Learners can see their own Pre/Post and self-assessment growth.
 - Peer Review is anonymous to the recipient: the reviewed Learner does not see the reviewer’s name. Admin can see reviewer identity for audit and complaint handling.
 - A Learner cannot review themselves or submit duplicate reviews for the same peer/Batch. Admin can hide/remove inappropriate comments, while preserving the moderation audit record.
