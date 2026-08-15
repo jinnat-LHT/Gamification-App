@@ -232,7 +232,10 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 - Central relational database with Client Organization, Program, Batch, Group, User, content, result, submission, attendance, XP transaction, import job, audit-log, and Admin-scope records.
 - Backend API enforcing authentication, authorization, Batch scope, gates, validation, and idempotency server-side.
 - Private object storage for Assignment files.
-- Audit log, soft delete, backup/restore process, and retention policy.
+- Audit Log is immutable and records authentication, role changes, Program/Batch/Group edits, imports, Gate changes, Attendance, XP changes, Assignment review, Peer moderation, and file access/deletion. Each event records actor, timestamp, Client Organization/Batch, target, before/after values, and reason where applicable. Admins may read within scope but cannot edit/delete logs.
+- Retain Audit Log for at least 2 years after Batch completion. Use Soft Delete for Learner, Group, Quiz, Assignment, and files; never hard-delete records referenced by results or XP transactions.
+- Database backup is daily, with Daily retention 30 days and Monthly retention 12 months. Test restore at least quarterly. MVP target: RPO ≤24 hours and RTO ≤8 hours.
+- Before retention expiry, support authorized Batch export as evidence; permanent deletion requires approval and is recorded.
 - Input validation, rate limiting, secure secrets, and security review.
 - Responsive UX for mobile, tablet, desktop, and projector.
 - Loading, empty, error, and retry states.
@@ -263,7 +266,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Data retention, backup, recovery target, and audit-log retention | Required for governance and operations |
+| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Leaderboard tie-breaking rule | Makes rankings deterministic |
 | Whether Levels/Badges are visual only or carry future privileges | Prevents hidden gamification rules |
 
