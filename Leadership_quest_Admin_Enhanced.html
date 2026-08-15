@@ -92,6 +92,91 @@
     .silver-glow { box-shadow: 0 0 25px 0px rgba(148, 163, 184, 0.45), inset 0 0 15px rgba(148, 163, 184, 0.2); border: 1px solid rgba(148, 163, 184, 0.6); }
     .bronze-glow { box-shadow: 0 0 25px 0px rgba(217, 119, 6, 0.45), inset 0 0 15px rgba(217, 119, 6, 0.2); border: 1px solid rgba(217, 119, 6, 0.6); }
 
+    /* LEADERBOARD PODIUM */
+    .podium-arena {
+      position: relative;
+      overflow: hidden;
+      padding: 1.5rem 1rem 1rem;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      border-radius: 1.25rem;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.2), transparent 46%),
+        linear-gradient(180deg, rgba(30, 41, 59, 0.82), rgba(2, 6, 23, 0.96));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), 0 16px 36px rgba(0,0,0,0.32);
+    }
+    .podium-arena::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.42;
+      background-image: linear-gradient(rgba(251,191,36,.11) 1px, transparent 1px), linear-gradient(90deg, rgba(251,191,36,.11) 1px, transparent 1px);
+      background-size: 24px 24px;
+      mask-image: linear-gradient(to bottom, black, transparent 86%);
+    }
+    .podium-stage {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: end;
+      gap: .75rem;
+      max-width: 58rem;
+      margin: 0 auto;
+    }
+    .podium-contestant { min-width: 0; text-align: center; }
+    .podium-profile { position: relative; z-index: 2; margin-bottom: -0.75rem; }
+    .podium-avatar {
+      width: 4.25rem;
+      height: 4.25rem;
+      margin: 0 auto .55rem;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      background: #0f172a;
+      border: 3px solid currentColor;
+    }
+    .podium-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .875rem; font-weight: 800; color: #f8fafc; }
+    .podium-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: .125rem; font-size: .6875rem; color: #94a3b8; }
+    .podium-block {
+      position: relative;
+      display: flex;
+      min-height: 7.5rem;
+      padding: 1.3rem .6rem .8rem;
+      align-items: flex-end;
+      justify-content: center;
+      overflow: hidden;
+      border: 1px solid currentColor;
+      border-radius: .85rem .85rem .3rem .3rem;
+    }
+    .podium-block::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, rgba(255,255,255,.22), transparent 24%, transparent 65%, rgba(255,255,255,.08)); pointer-events: none; }
+    .podium-rank { position: absolute; top: .5rem; left: 50%; transform: translateX(-50%); font-size: 2.25rem; line-height: 1; font-weight: 900; opacity: .34; }
+    .podium-xp { position: relative; z-index: 1; font-size: .8125rem; font-weight: 900; white-space: nowrap; }
+    .podium-gold { color: #fbbf24; order: 2; }
+    .podium-gold .podium-avatar { width: 5.25rem; height: 5.25rem; font-size: 1.8rem; box-shadow: 0 0 0 5px rgba(245,158,11,.13), 0 0 26px rgba(245,158,11,.6); }
+    .podium-gold .podium-block { min-height: 11rem; background: linear-gradient(145deg, #b45309, #f59e0b 48%, #78350f); box-shadow: 0 0 28px rgba(245,158,11,.42); }
+    .podium-silver { color: #cbd5e1; order: 1; }
+    .podium-silver .podium-block { min-height: 8.7rem; background: linear-gradient(145deg, #475569, #94a3b8 50%, #334155); box-shadow: 0 0 22px rgba(148,163,184,.26); }
+    .podium-bronze { color: #fb923c; order: 3; }
+    .podium-bronze .podium-block { min-height: 6.7rem; background: linear-gradient(145deg, #7c2d12, #c2410c 52%, #431407); box-shadow: 0 0 22px rgba(194,65,12,.3); }
+    .podium-crown { position: absolute; top: -1.4rem; left: 50%; transform: translateX(-50%); color: #fbbf24; filter: drop-shadow(0 0 8px rgba(251,191,36,.8)); font-size: 1.1rem; }
+    @media (max-width: 640px) {
+      .podium-arena { padding: 1rem .65rem .75rem; }
+      .podium-stage { gap: .4rem; }
+      .podium-avatar { width: 3.3rem; height: 3.3rem; font-size: 1.1rem; }
+      .podium-gold .podium-avatar { width: 4.1rem; height: 4.1rem; font-size: 1.35rem; }
+      .podium-name { font-size: .7rem; }
+      .podium-meta { font-size: .58rem; }
+      .podium-block { min-height: 5.5rem; padding-left: .25rem; padding-right: .25rem; }
+      .podium-gold .podium-block { min-height: 8rem; }
+      .podium-silver .podium-block { min-height: 6.6rem; }
+      .podium-bronze .podium-block { min-height: 5rem; }
+      .podium-rank { font-size: 1.75rem; }
+      .podium-xp { font-size: .62rem; }
+    }
+
     .glass-nav {
       background: rgba(15, 23, 42, 0.88);
       backdrop-filter: blur(16px);
@@ -793,41 +878,37 @@
         </div>
 
         <div id="targetPodiumCard" class="space-y-3">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 items-stretch" id="podiumContainer">
-            <!-- 2nd Place -->
-            <div id="podium2" class="glass-card p-3.5 rounded-2xl silver-glow order-2 md:order-1 flex items-center space-x-3.5">
-              <div class="w-11 h-11 rounded-full bg-slate-400 p-0.5 shrink-0 relative">
-                <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-slate-200" id="p2Avatar"><i class="fa-solid fa-user-astronaut"></i></div>
-                <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-slate-400 text-slate-950 text-[10px] font-black flex items-center justify-center">2</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex justify-between"><h4 class="text-sm font-bold text-slate-100 truncate" id="p2Name">คุณสมชาย</h4><span class="text-xs font-black text-slate-200 ml-2" id="p2Xp">24,500 XP</span></div>
-                <div class="flex justify-between mt-0.5"><p class="text-[11px] text-slate-400 truncate" id="p2Group">Group Alpha</p><p class="text-[10px] text-cyan-400 font-medium truncate" id="p2Level">Visionary</p></div>
-              </div>
-            </div>
-
-            <!-- 1st Winner -->
-            <div id="podium1" class="glass-card p-4 rounded-2xl gold-glow order-1 md:order-2 flex items-center space-x-3.5 border-amber-500/70 bg-slate-900/95">
-              <div class="w-13 h-13 rounded-full bg-gradient-to-tr from-amber-500 to-orange-500 p-0.5 shrink-0 relative">
-                <div class="w-full h-full rounded-full bg-slate-950 flex items-center justify-center text-amber-400 text-xl" id="p1Avatar"><i class="fa-solid fa-user-ninja"></i></div>
-                <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 text-slate-950 text-[10px] font-black flex items-center justify-center">1</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex justify-between"><h4 class="text-sm font-black text-slate-100 truncate" id="p1Name">คุณสมศรี</h4><span class="text-sm font-black text-amber-400 ml-2" id="p1Xp">38,500 XP</span></div>
-                <div class="flex justify-between mt-0.5"><p class="text-[11px] text-amber-400 font-semibold truncate" id="p1Group">Group Alpha</p><p class="text-[10px] text-cyan-300 font-semibold truncate" id="p1Level">Strategic</p></div>
-              </div>
-            </div>
-
-            <!-- 3rd Place -->
-            <div id="podium3" class="glass-card p-3.5 rounded-2xl bronze-glow order-3 flex items-center space-x-3.5">
-              <div class="w-11 h-11 rounded-full bg-amber-700 p-0.5 shrink-0 relative">
-                <div class="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-amber-500" id="p3Avatar"><i class="fa-solid fa-user-tie"></i></div>
-                <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-700 text-slate-100 text-[10px] font-black flex items-center justify-center">3</span>
-              </div>
-              <div class="min-w-0 flex-1">
-                <div class="flex justify-between"><h4 class="text-sm font-bold text-slate-100 truncate" id="p3Name">คุณวิชัย</h4><span class="text-xs font-extrabold text-amber-500 ml-2" id="p3Xp">18,800 XP</span></div>
-                <div class="flex justify-between mt-0.5"><p class="text-[11px] text-slate-400 truncate" id="p3Group">Group Beta</p><p class="text-[10px] text-cyan-400 font-medium truncate" id="p3Level">Emerging</p></div>
-              </div>
+          <div class="flex items-center justify-between px-1">
+            <h3 class="text-sm sm:text-base font-bold text-slate-200"><i class="fa-solid fa-trophy text-amber-400 mr-2"></i>Hall of Fame</h3>
+            <span class="text-[11px] text-amber-300"><i class="fa-solid fa-sparkles mr-1"></i>TOP 3</span>
+          </div>
+          <div class="podium-arena">
+            <div class="podium-stage" id="podiumContainer">
+              <article id="podium2" class="podium-contestant podium-silver">
+                <div class="podium-profile">
+                  <div class="podium-avatar" id="p2Avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+                  <h4 class="podium-name" id="p2Name">คุณสมชาย</h4>
+                  <p class="podium-meta" id="p2Group">Group Alpha</p>
+                </div>
+                <div class="podium-block"><span class="podium-rank">2</span><span class="podium-xp" id="p2Xp">24,500 XP</span></div>
+              </article>
+              <article id="podium1" class="podium-contestant podium-gold">
+                <div class="podium-profile">
+                  <span class="podium-crown"><i class="fa-solid fa-crown"></i></span>
+                  <div class="podium-avatar" id="p1Avatar"><i class="fa-solid fa-user-ninja"></i></div>
+                  <h4 class="podium-name" id="p1Name">คุณสมศรี</h4>
+                  <p class="podium-meta" id="p1Group">Group Alpha</p>
+                </div>
+                <div class="podium-block"><span class="podium-rank">1</span><span class="podium-xp" id="p1Xp">38,500 XP</span></div>
+              </article>
+              <article id="podium3" class="podium-contestant podium-bronze">
+                <div class="podium-profile">
+                  <div class="podium-avatar" id="p3Avatar"><i class="fa-solid fa-user-tie"></i></div>
+                  <h4 class="podium-name" id="p3Name">คุณวิชัย</h4>
+                  <p class="podium-meta" id="p3Group">Group Beta</p>
+                </div>
+                <div class="podium-block"><span class="podium-rank">3</span><span class="podium-xp" id="p3Xp">18,800 XP</span></div>
+              </article>
             </div>
           </div>
         </div>
