@@ -229,7 +229,8 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 ## 10. Production architecture and non-functional requirements
 
 ### Required before pilot
-- Central relational database with Client Organization, Program, Batch, Group, User, content, result, submission, attendance, XP transaction, import job, audit-log, and Admin-scope records.
+- **Supabase PostgreSQL** is the managed relational database. Supabase Auth handles account identity, private Supabase Storage holds Assignment files, and Row-Level Security enforces Client Organization/Program/Batch scope.
+- A server-side service layer/Edge Functions owns XP awards, imports, file authorization, audit writes, and other trusted mutations; clients do not write XP or bypass authorization directly.
 - Backend API enforcing authentication, authorization, Batch scope, gates, validation, and idempotency server-side.
 - Private object storage for Assignment files.
 - Audit Log is immutable and records authentication, role changes, Program/Batch/Group edits, imports, Gate changes, Attendance, XP changes, Assignment review, Peer moderation, and file access/deletion. Each event records actor, timestamp, Client Organization/Batch, target, before/after values, and reason where applicable. Admins may read within scope but cannot edit/delete logs.
