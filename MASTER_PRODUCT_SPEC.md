@@ -155,7 +155,9 @@ If an activity is disabled, the related metric/chart is hidden or shown as **N/A
 - Self-Behavior uses a 1–5 scale for the five configured leadership dimensions.
 - Peer Review requires a rating and written feedback for required peers before submission.
 - A learner cannot access or submit a disabled/closed activity.
-- Attempt count, late submission, edit/resubmission, and score-release policy are **TBD** and must be decided before API development.
+- Knowledge Test and Self-Behavior/Peer Review allow one submission per Learner/Batch. Learners may navigate and edit answers before final submit; after submission they cannot edit or resubmit in MVP.
+- Assignment submissions may be edited and resubmitted until the Assignment Gate closes or its due date passes. XP is awarded once on the first successful submission; later revisions do not award additional XP.
+- Due dates are optional per Assignment. After a due date, the Assignment is marked late; Admin may keep accepting late submissions per Assignment.
 
 ### 7.3 Assignments
 Each enabled Assignment can be configured independently with:
@@ -247,7 +249,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 | Decision | Why it matters |
 |---|---|
 | Quiz/criteria versioning after a Batch starts | Protects historical results and reports |
-| Test attempt, resubmission, late-submission, and score-release policies | Defines learner workflow and data model |
+| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
 | Peer-review anonymity and moderation | Protects fairness and privacy |
 | Assignment file types, size limits, retention, and malware scanning | Required for secure storage |
 | Data retention, backup, recovery target, and audit-log retention | Required for governance and operations |
