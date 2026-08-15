@@ -29,6 +29,17 @@ Deno.serve(async(req)=>{
     const r=await db.from("batch_activity_configs").select("id,activity_type,activity_key,enabled,gate_state,due_at,config_json").eq("batch_id",batchId).order("activity_type");
     if(r.error)return out({error:"Could not load activity configuration"},500);return out({items:r.data??[]});
   }
+  if(action==="update_details"){
+    const id=String(payload.activity_config_id??""),title=String(payload.title??"").trim(),instructions=String(payload.instructions??"").trim();
+    if(!id||!title)return out({error:"Assignment title is required"},422);
+    const own=await db.from("batch_activity_configs").select("id,activity_type,config_json").eq("id",id).eq("batch_id",batchId).maybeSingle();
+    if(!own.data||own.data.activity_type!=="ASSIGNMENT")return out({error:"Assignment not found"},404);
+    const config_json={...(own.data.config_json??{}),title,instructions};
+    const updated=await db.from("batch_activity_configs").update({config_json}).eq("id",id).select("id,config_json").single();
+    if(updated.error)return out({error:"Could not save assignment details"},500);
+    await db.from("audit_events").insert({actor_user_id:user.id,batch_id:batchId,event_type:"ASSIGNMENT_CONFIG_UPDATED",target_type:"batch_activity_config",target_id:id,after_json:config_json});
+    return out({item:updated.data});
+  }
   if(action==="update"){
     const id=String(payload.activity_config_id??""),enabled=Boolean(payload.enabled),gate=String(payload.gate_state??"");
     if(!id||!["OPEN","LOCKED"].includes(gate))return out({error:"Invalid activity update"},422);
