@@ -35,3 +35,5 @@
 | 2026-08-15 | Post-test requires ≥80%; failed Learners may retest while the Gate is open, but a passed Learner is locked from retaking. Each attempt is retained; XP is awarded once on first pass. | Approved | Give Learners a fair opportunity to pass without allowing repeated attempts to inflate results or XP. | Store attempt history, pass state, and first-passing attempt separately. |
 
 | 2026-08-15 | Executive Post-test reporting uses each Learner’s first passing Attempt (≥80%), aggregated as the selected Batch’s cohort average. | Approved | Reflect the achieved passing outcome while keeping the report at cohort level. | Store first-passing score separately from all attempts; do not expose individual rows in the executive chart. |
+
+| 2026-08-15 | Leaderboard ties use the earlier timestamp of reaching the tied XP total; identical timestamps fall back to normalized display-name alphabetical order. | Approved | Make rankings deterministic and reward earlier achievement without arbitrary manual tie-breaking. | Store XP transaction timestamps and the tie-break event needed to reproduce the order. |
