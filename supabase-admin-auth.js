@@ -56,7 +56,11 @@
     window.leadershipQuestAccount = account;
     const name = account.display_name || account.email;
     if (byId("userName")) byId("userName").textContent = name;
-    if (byId("userRoleBadge")) byId("userRoleBadge").textContent = "Administrator";
+    if (byId("userRoleBadge")) byId("userRoleBadge").textContent = account.account_type === "FACILITATOR" ? "Facilitator" : "Administrator";
+
+    if (account.account_type === "FACILITATOR") {
+      document.querySelectorAll("[id^='nav-admin-']").forEach((item) => item.classList.add("hidden"));
+    }
 
     if (typeof window.switchAdminModule === "function") {
       window.switchAdminModule("setup");
@@ -73,7 +77,7 @@
       .single();
 
     if (error) throw new Error("ไม่พบบัญชีใน Leadership Quest");
-    if (data.status !== "ACTIVE" || data.account_type !== "ADMIN") {
+    if (data.status !== "ACTIVE" || !["ADMIN", "FACILITATOR"].includes(data.account_type)) {
       throw new Error("บัญชีนี้ไม่มีสิทธิ์เข้า Admin Portal");
     }
     return data;
