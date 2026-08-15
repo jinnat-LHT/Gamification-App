@@ -131,6 +131,30 @@ as $$
   );
 $$;
 
+create or replace function public.has_admin_client_scope(p_client_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $
+  select exists (
+    select 1
+    from public.client_organizations co
+    join public.role_assignments ra
+      on ra.user_id = auth.uid()
+     and ra.role = 'ADMIN'
+     and ra.revoked_at is null
+     and (
+       (ra.scope_type = 'CLIENT_ORGANIZATION' and ra.client_organization_id = co.id)
+       or (ra.scope_type = 'PROVIDER' and ra.provider_organization_id = co.provider_organization_id)
+     )
+    join public.user_accounts ua on ua.id = ra.user_id
+    where co.id = p_client_id
+      and ua.status in ('INVITED', 'ACTIVE')
+  );
+$;
+
 create or replace function public.has_admin_batch_scope(p_batch_id uuid)
 returns boolean
 language sql
@@ -163,6 +187,7 @@ $;
 revoke all on function public.current_user_account_id() from public;
 revoke all on function public.is_provider_admin(uuid) from public;
 revoke all on function public.has_client_scope(uuid) from public;
+revoke all on function public.has_admin_client_scope(uuid) from public;
 revoke all on function public.has_program_scope(uuid) from public;
 revoke all on function public.has_batch_scope(uuid) from public;
 revoke all on function public.has_admin_batch_scope(uuid) from public;
@@ -222,7 +247,7 @@ using (
       )
   )
 )
-with check (public.has_client_scope(client_organization_id));
+with check (public.has_admin_client_scope(client_organization_id));
 
 drop policy if exists batches_select on public.batches;
 create policy batches_select on public.batches
@@ -235,7 +260,7 @@ for all to authenticated
 using (
   public.has_admin_batch_scope(id)
 )
-with check (public.has_program_scope(program_id));
+with check (public.has_admin_batch_scope(id));
 
 drop policy if exists groups_select on public.groups;
 create policy groups_select on public.groups
@@ -259,7 +284,7 @@ for all to authenticated
 using (
   public.has_admin_batch_scope(batch_id)
 )
-with check (public.has_batch_scope(batch_id));
+with check (public.has_admin_batch_scope(batch_id));
 
 drop policy if exists activity_config_select on public.batch_activity_configs;
 create policy activity_config_select on public.batch_activity_configs
