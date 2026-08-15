@@ -7,7 +7,11 @@
     const client = window.leadershipQuestSupabase;
     if (!client) throw new Error("กรุณาเข้าสู่ระบบใหม่");
     const { data, error } = await client.functions.invoke("post-test", { body });
-    if (error || data?.error) throw new Error(error?.message || data.error);
+    if (data?.error) throw new Error(data.error);
+    if (error) {
+      const detail = await error.context?.json().catch(() => null);
+      throw new Error(detail?.error || error.message);
+    }
     return data;
   }
   function modal() {
