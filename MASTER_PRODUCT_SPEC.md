@@ -180,7 +180,7 @@ Assignment files are stored in private object storage. Downloads use authorized 
 - Individual leaderboard ranks learners by **total approved Batch XP**.
 - Group Battle displays **total Group XP**.
 - Executive reporting displays **average XP per Group**; this is a different metric and must be labeled clearly.
-- Tie-breaking rule is **TBD**.
+- Leaderboard order: total approved Batch XP descending; if tied, the Learner who reached that total earlier ranks higher; if timestamps are identical, sort by normalized display name alphabetically. The tie-break timestamp and XP transactions must be retained for audit.
 - Badge/archetype display is cosmetic unless a future approved rule assigns value.
 
 ## 8. Gamification and XP rules
