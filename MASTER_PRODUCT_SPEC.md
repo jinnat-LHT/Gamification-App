@@ -20,7 +20,7 @@ The system must balance three goals:
 
 - The platform is operated by **one provider organization** (your organization) and supports **multiple client organizations** from day one. Each client organization can have multiple Programs.
 - Client organizations do not receive self-service administration in MVP; provider Admin accounts manage only the client-organization scopes assigned to them.
-- Roles in MVP: **Admin** and **Learner** only. Multiple individual Admin accounts are supported; there is no Facilitator role in MVP.
+- Roles in MVP: **Admin**, **Facilitator**, and **Learner**. Multiple individual Admin accounts are supported. Facilitator access is explicitly assigned by Client Organization, Program, and Batch.
 - The product has separate Admin and Learner experiences connected to the same backend.
 - The current standalone HTML files are prototypes only. Production must use authenticated accounts, a backend API, a central database, and private file storage; `localStorage` is not a system of record.
 - Self-service client-organization administration, corporate SSO, real-time collaboration, and advanced automation are deferred unless explicitly approved.
@@ -44,17 +44,21 @@ Provider Organization
 
 ## 4. Roles and authorization
 
-| Capability | Admin | Learner |
-|---|---:|---:|
-| Manage Program, Batch, Group, learning configuration within assigned Client Organizations | Allow | Deny |
-| Import roster, quizzes, assessment criteria | Allow | Deny |
-| Manage quiz bank and behavioral criteria | Allow | Deny |
-| Manage attendance and XP adjustments | Allow | Deny |
-| Open/close enabled learning gates | Allow | Deny |
-| View executive reports and export CSV | Allow | Deny |
-| Complete tests, assessments, peer review, assignments | Deny in normal account | Allow |
-| View personal learning results | Optional test account only | Allow |
-| View Batch leaderboard | Allow | Allow |
+| Capability | Admin | Facilitator | Learner |
+|---|---:|---:|---:|
+| Manage Program, Batch, Group, learning configuration | Allow | Deny | Deny |
+| View assigned Batch learner roster | Allow | Read-only | Own profile only |
+| Add/edit/delete/import Learners, Groups, or learner fields | Allow | Deny | Deny |
+| Import quizzes/assessment criteria | Allow | Deny | Deny |
+| Manage Quiz Bank and behavioral criteria | Allow | Deny | Deny |
+| Review Assignments and provide feedback | Allow | Allow (assigned scope) | Own submissions |
+| View assigned Test/Assessment results | Allow | Allow (assigned scope) | Own results |
+| Manage attendance | Allow | Allow (assigned scope) | Deny |
+| Open/close enabled learning gates | Allow | Allow (assigned scope) | Deny |
+| Manual XP adjustment / Rapid Group Score | Allow | Only if explicitly granted | Deny |
+| View executive reports and export CSV | Allow | Assigned scope; export policy-controlled | Deny |
+| Complete tests, assessments, peer review, assignments | Deny in normal account | Deny in normal account | Allow |
+| View Batch leaderboard | Allow | Assigned scope | Allow |
 
 Every management, configuration, import, attendance, gate, and XP action must record the individual Admin account, timestamp, and reason where applicable.
 
@@ -240,7 +244,7 @@ Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the
 
 ### Future candidates
 - Delegated self-service administration for client organizations
-- Facilitator role
+- expanded Facilitator permissions
 - Corporate SSO and automated provisioning
 - AI-assisted import drafting from Word/PDF with compulsory Admin review
 - Rubrics, scoring, and written feedback on Assignments
