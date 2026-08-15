@@ -46,6 +46,8 @@
 - Post-test: +1,500 XP once per learner per Batch; this is a completion reward, not a reward based on correct-answer count.
 - Self-Behavior After: +1,000 XP once per learner per Batch.
 - Peer Review: +2,000 XP once per learner per Batch.
+- Each enabled Assignment is configurable by Batch with one submission mode: text response, file upload, URL/link, or text + file upload. Required fields are set per Assignment.
+- Assignment file uploads must use private object storage and authorized download URLs; file-size limits, allowed formats, retention period, and malware-scanning policy are **TBD**.
 - Assignments #1–#3: +3,000 XP each, once per learner per Batch.
 - Live XP adjustment is an explicit positive or negative amount and must record a reason, authorized Admin account, and time.
 - Executive Pre/Post reporting displays the selected Batch’s cohort average, not individual learner results.
@@ -83,7 +85,7 @@
 | AC-14 | Admin opens a gate for the current Batch | Learner refreshes/reopens the page | The relevant task becomes available only to learners in that Batch. |
 | AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | The result is saved once and updates relevant reporting. |
 | AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group and is not exposed beyond authorized scope. |
-| AC-17 | Admin opens Assignment #n | Learner submits required content | Submission is stored once and completion reporting updates. |
+| AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text, file, and/or URL fields | Submission is stored against the learner and Batch; private files are downloadable only by authorized users; completion reporting updates. |
 
 ### D. Learners, attendance, and XP
 
@@ -105,6 +107,7 @@
 | AC-26 | Data exists for the enabled features | Admin views Reports | Applicable charts render from selected-Batch data. A disabled test/assessment/assignment is hidden or marked N/A and is never treated as a zero score/completion rate. |
 | AC-27 | A Batch is selected | Admin exports CSV | File includes approved learner-level fields and uses UTF-8 BOM for Thai characters. |
 | AC-28 | A user lacks management permission | They request data outside their scope | Server rejects the request; the UI does not expose it. |
+| AC-29 | A learner uploads an Assignment file | The file violates the allowed type or size policy | Upload is rejected before submission and the learner sees a clear validation message. |
 
 ## Production acceptance gates
 
