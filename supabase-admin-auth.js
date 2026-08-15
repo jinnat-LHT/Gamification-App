@@ -50,6 +50,9 @@
     byId("contextBar")?.classList.remove("hidden");
     byId("gameTicker")?.classList.remove("hidden");
 
+    document.querySelectorAll("[id^='nav-admin-']").forEach((item) => item.classList.remove("hidden"));
+    ["nav-dashboard", "nav-tests", "nav-assignments", "nav-leaderboard"].forEach((id) => byId(id)?.classList.add("hidden"));
+
     window.leadershipQuestAccount = account;
     const name = account.display_name || account.email;
     if (byId("userName")) byId("userName").textContent = name;
