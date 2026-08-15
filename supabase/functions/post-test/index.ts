@@ -21,7 +21,7 @@ Deno.serve(async (req) => {
   if(!snapshot) return out({error:"Batch content is not published"},422);
   const {data:existing}=await admin.from("submissions").select("id,status,passed_at").eq("activity_config_id",config.id).eq("batch_learner_id",enrollment.id).maybeSingle();
   if(existing?.status==="PASSED") return out({locked:true,status:"PASSED",passed_at:existing.passed_at});
-  const {data:questions}=await admin.from("quiz_question_versions").select("id,question_text,option_a,option_b,option_c,option_d,sort_order").eq("program_version_id",snapshot.program_version_id).is("deleted_at",null).order("sort_order");
+  const {data:questions}=await admin.from("quiz_question_versions").select("id,question_text,option_a,option_b,option_c,option_d,correct_option,sort_order").eq("program_version_id",snapshot.program_version_id).is("deleted_at",null).order("sort_order");
   if(!questions?.length) return out({error:"Quiz Bank has no questions"},422);
   let submission=existing;
   if(!submission){const {data,error}=await admin.from("submissions").insert({batch_id:enrollment.batch_id,batch_learner_id:enrollment.id,activity_config_id:config.id,activity_type:"POST_TEST",status:"IN_PROGRESS"}).select("id,status").single();if(error||!data)return out({error:"Could not start post-test"},500);submission=data;}
