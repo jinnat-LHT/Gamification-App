@@ -86,7 +86,7 @@
 | AC-13 | An enabled feature gate is locked | Learner selects it | They cannot submit and see “รอวิทยากรเปิดระบบ”. |
 | AC-14 | Admin opens a gate for the current Batch | Learner refreshes/reopens the page | The relevant task becomes available only to learners in that Batch. |
 | AC-15 | Admin opens Post-test or Self-Behavior After | Learner submits valid answers | The result is saved once and updates relevant reporting. |
-| AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group and is not exposed beyond authorized scope; one final submission is allowed per Learner/Batch. |
+| AC-16 | Admin opens Peer Review | Learner submits peer feedback | Feedback is stored against the correct Batch/Group; the recipient cannot see reviewer identity; one final submission is allowed per Learner/Batch. |
 | AC-17 | Admin configures and opens Assignment #n | Learner supplies all required text and/or file fields | Submission is stored against the learner and Batch; private files are downloadable only by authorized users; completion reporting updates; XP is awarded once. |
 
 ### D. Learners, attendance, and XP
@@ -113,6 +113,7 @@
 | AC-28 | A user lacks management permission | They request data outside their scope | Server rejects the request; the UI does not expose it. |
 | AC-29 | A learner uploads an Assignment file | The file violates the allowed type or size policy | Upload is rejected before submission and the learner sees a clear validation message. |
 | AC-30 | Admin uploads an invalid import file | Validation finds errors | No data is written until errors are resolved and Admin explicitly confirms a clean preview. |
+| AC-31 | A Learner attempts self-review, duplicate review, or inappropriate feedback | The API processes the submission/moderation action | The invalid review is rejected or comment is hidden; Admin identity and reason are retained in the audit log. |
 
 ## Production acceptance gates
 
