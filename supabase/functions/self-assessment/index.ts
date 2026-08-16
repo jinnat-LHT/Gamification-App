@@ -38,7 +38,7 @@ async function canManageBatch(db:any,roles:any[],batchId:string){
   return roles.some(r=>(r.scope_type==="PROVIDER"&&r.provider_organization_id===client.data.provider_organization_id)||(r.scope_type==="CLIENT_ORGANIZATION"&&r.client_organization_id===client.data.id)||(r.scope_type==="PROGRAM"&&r.program_id===program.data.id)||(r.scope_type==="BATCH"&&r.batch_id===batch.data.id));
 }
 async function learnerEnrollment(db:any,userId:string){
-  const r=await db.from("batch_learners").select("id,batch_id,status").eq("learner_id",userId).in("status",["INVITED","ACTIVE"]).limit(1).maybeSingle();
+  const r=await db.from("batch_learners").select("id,batch_id,enrollment_status").eq("learner_id",userId).in("enrollment_status",["INVITED","ACTIVE"]).limit(1).maybeSingle();
   return r.data;
 }
 Deno.serve(async(req)=>{
@@ -69,19 +69,19 @@ Deno.serve(async(req)=>{
   const criteria=Array.isArray(config.data.config_json?.criteria)&&config.data.config_json.criteria.length===5?config.data.config_json.criteria:defaultCriteria;
   const scale_labels=config.data.config_json?.scale_labels??criteria[0]?.scale_labels??defaultScaleLabels;
   const instructions=config.data.config_json?.instructions??"กรุณาประเมินพฤติกรรมของตัวท่านในช่วง 3 เดือนที่ผ่านมา ในหัวข้อต่อไปนี้ โดยมีระดับคะแนน 1–5";
-  const existing=await db.from("submissions").select("id,status,submitted_at").eq("activity_config_id",config.data.id).eq("batch_learner_id",enrollment.id).maybeSingle();
-  if(action==="start")return out({type,criteria,scale_labels,instructions,submitted:existing.data?.status==="SUBMITTED",submitted_at:existing.data?.submitted_at??null});
+  const existing=await db.from("submissions").select("id,status,last_submitted_at").eq("activity_config_id",config.data.id).eq("batch_learner_id",enrollment.id).maybeSingle();
+  if(action==="start")return out({type,criteria,scale_labels,instructions,submitted:existing.data?.status==="SUBMITTED",submitted_at:existing.data?.last_submitted_at??null});
   if(existing.data?.status==="SUBMITTED")return out({error:"คุณส่งแบบประเมินนี้แล้ว"},409);
   try{
     const ratings:any=payload.ratings??{},response:any={};
     criteria.forEach((criterion:any)=>{const value=Number(ratings[criterion.key]);if(!Number.isInteger(value)||value<1||value>5)throw new Error("กรุณาเลือกระดับให้ครบทั้ง 5 ข้อ");response[criterion.key]=value;});
     let submissionId=existing.data?.id;
-    if(!submissionId){const created=await db.from("submissions").insert({activity_config_id:config.data.id,batch_learner_id:enrollment.id,status:"DRAFT"}).select("id").single();if(created.error||!created.data)throw new Error("Could not create submission");submissionId=created.data.id;}
+    if(!submissionId){const created=await db.from("submissions").insert({batch_id:enrollment.batch_id,activity_type:type,activity_config_id:config.data.id,batch_learner_id:enrollment.id,status:"NOT_STARTED"}).select("id").single();if(created.error||!created.data)throw new Error("Could not create submission");submissionId=created.data.id;}
     const attempts=await db.from("submission_attempts").select("attempt_number").eq("submission_id",submissionId).order("attempt_number",{ascending:false}).limit(1);
     const attemptNumber=(attempts.data?.[0]?.attempt_number??0)+1,score=Object.values(response).reduce((sum:any,value:any)=>sum+Number(value),0)/5*20;
     const attempt=await db.from("submission_attempts").insert({submission_id:submissionId,attempt_number:attemptNumber,response_json:{ratings:response},score_percent:score,pass_state:"NOT_APPLICABLE"});
     if(attempt.error)throw new Error("Could not save responses");
-    const final=await db.from("submissions").update({status:"SUBMITTED",submitted_at:new Date().toISOString()}).eq("id",submissionId);if(final.error)throw new Error("Could not submit Self-assessment");
+    const final=await db.from("submissions").update({status:"SUBMITTED",first_submitted_at:new Date().toISOString(),last_submitted_at:new Date().toISOString()}).eq("id",submissionId);if(final.error)throw new Error("Could not submit Self-assessment");
     return out({submitted:true,score_percent:score});
   }catch(error){return out({error:error instanceof Error?error.message:"Could not submit Self-assessment"},422);}
 });
