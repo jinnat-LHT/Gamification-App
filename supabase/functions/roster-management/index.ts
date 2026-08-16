@@ -23,7 +23,7 @@ async function scopeForBatch(db:any,roles:any[],batchId:string){
     (r.scope_type==="PROGRAM"&&r.program_id===program.data.id)||
     (r.scope_type==="BATCH"&&r.batch_id===batch.data.id)
   );
-  return allowed?{batch,program,client}:null;
+  return allowed?{batch:batch.data,program:program.data,client:client.data}:null;
 }
 const statusAllowed=new Set(["INVITED","ACTIVE","COMPLETED","WITHDRAWN"]);
 
