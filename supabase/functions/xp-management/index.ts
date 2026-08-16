@@ -17,7 +17,7 @@ Deno.serve(async req=>{
   const learnerIds=(enrollments.data??[]).map((x:any)=>x.learner_id),batchLearnerIds=(enrollments.data??[]).map((x:any)=>x.id),groupIds=[...new Set((enrollments.data??[]).map((x:any)=>x.group_id))];
   const [accounts,groups,transactions]=await Promise.all([
     learnerIds.length?db.from("user_accounts").select("id,display_name,email").in("id",learnerIds):Promise.resolve({data:[]}),
-    groupIds.length?db.from("groups").select("id,name").in("id",groupIds):Promise.resolve({data:[]}),
+    db.from("groups").select("id,name").eq("batch_id",batchId).order("name"),
     batchLearnerIds.length?db.from("xp_transactions").select("batch_learner_id,source_type,amount,reason,created_at").eq("batch_id",batchId).in("batch_learner_id",batchLearnerIds):Promise.resolve({data:[]})
   ]);
   if(accounts.error||groups.error||transactions.error)return reply({error:"Could not load XP data"},500);
@@ -26,14 +26,14 @@ Deno.serve(async req=>{
   const learners=(enrollments.data??[]).map((x:any)=>{const account=accountMap.get(x.learner_id)??{},group=groupMap.get(x.group_id)??{};return {id:x.id,name:account.display_name??account.email??"ไม่ระบุชื่อ",email:account.email??"",group_id:x.group_id,group_name:group.name??"",xp:xpByLearner.get(x.id)??0,rapid_awards:rapidCount.get(x.id)??0};}).sort((a:any,b:any)=>b.xp-a.xp||a.name.localeCompare(b.name,"th"));
   if(action==="list")return reply({groups:groups.data??[],learners});
   if(action==="rapid_group"){
-    const groupId=String(payload.group_id??""),reason=String(payload.reason??"Rapid Group Score").trim().slice(0,250)||"Rapid Group Score";
+    const groupId=String(payload.group_id??""),reason=String(payload.reason??"Bonus Group Score").trim().slice(0,250)||"Bonus Group Score";
     const eligible=learners.filter((x:any)=>x.group_id===groupId&&x.rapid_awards<5);
     if(!groupMap.has(groupId))return reply({error:"Selected group does not belong to this batch"},422);
-    if(!eligible.length)return reply({error:"สมาชิกในกลุ่มได้รับ Rapid Group Score ครบ 5 ครั้งแล้ว"},422);
+    if(!eligible.length)return reply({error:"สมาชิกในกลุ่มได้รับ Bonus Group Score ครบ 5 ครั้งแล้ว"},422);
     const rows=eligible.map((x:any)=>({client_organization_id:scope.client.id,batch_id:batchId,batch_learner_id:x.id,source_type:"RAPID_GROUP",amount:1000,reason,idempotency_key:"rapid-group:"+batchId+":"+groupId+":"+x.id+":"+(x.rapid_awards+1),created_by:user.id}));
-    const saved=await db.from("xp_transactions").insert(rows);if(saved.error)return reply({error:"Could not award Rapid Group Score"},500);
+    const saved=await db.from("xp_transactions").insert(rows);if(saved.error)return reply({error:"Could not award Bonus Group Score"},500);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"RAPID_GROUP_SCORE_AWARDED",target_type:"GROUP",target_id:groupId,after_json:{recipients:eligible.length,xp_per_learner:1000},reason});
-    return reply({saved:true,message:"ให้ Rapid Group Score สำเร็จ "+eligible.length+" คน",recipients:eligible.length});
+    return reply({saved:true,message:"ให้ Bonus Group Score สำเร็จ "+eligible.length+" คน",recipients:eligible.length});
   }
   if(action==="adjust"){
     const learnerId=String(payload.batch_learner_id??""),amount=Number(payload.amount),reason=String(payload.reason??"").trim().slice(0,250);
