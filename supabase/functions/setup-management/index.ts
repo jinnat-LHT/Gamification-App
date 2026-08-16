@@ -85,9 +85,14 @@ Deno.serve(async req=>{
   if(action==="create_batch"||action==="update_batch"){
     const programId=clean(payload.program_id),scope=await scopeForProgram(db,roles,programId);
     if(!scope)return reply({error:"ไม่มีสิทธิ์จัดการโปรแกรมนี้"},403);
-    const name=clean(payload.name),code=clean(payload.external_code,40).toUpperCase().replace(/[^A-Z0-9_-]/g,""),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null,status=["DRAFT","READY","ACTIVE","COMPLETED","ARCHIVED"].includes(clean(payload.status))?clean(payload.status):"DRAFT";
-    if(!name||!code)return reply({error:"กรุณาระบุชื่อรุ่นและรหัสรุ่น"},422);
+    const name=clean(payload.name),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null,status=["DRAFT","READY","ACTIVE","COMPLETED","ARCHIVED"].includes(clean(payload.status))?clean(payload.status):"DRAFT";
+    let code=clean(payload.external_code,40).toUpperCase().replace(/[^A-Z0-9_-]/g,"");
+    if(!name)return reply({error:"กรุณาระบุชื่อรุ่น"},422);
     if(action==="create_batch"){
+      const existing=await db.from("batches").select("external_code").eq("program_id",programId).is("deleted_at",null);
+      if(existing.error)return reply({error:"ไม่สามารถสร้างรหัสรุ่นได้"},500);
+      const prefix=batchPrefix(scope.program.name),pattern=new RegExp("^"+prefix+"-(\\d+)$"),max=(existing.data??[]).reduce((value:number,row:any)=>{const match=String(row.external_code??"").match(pattern);return match?Math.max(value,Number(match[1])):value;},0);
+      code=prefix+"-"+String(max+1).padStart(3,"0");
       const created=await db.from("batches").insert({program_id:programId,name,external_code:code,start_date:startDate,end_date:endDate,status}).select("id,name").maybeSingle();
       if(created.error)return reply({error:created.error.code==="23505"?"รหัสรุ่นซ้ำในโปรแกรมนี้":"ไม่สามารถสร้างรุ่นได้"},422);
       const configs=[
@@ -96,7 +101,7 @@ Deno.serve(async req=>{
       ].map(x=>({...x,batch_id:created.data.id,enabled:false,gate_state:"LOCKED"}));
       const configResult=await db.from("batch_activity_configs").insert(configs);if(configResult.error)return reply({error:"สร้างการตั้งค่ากิจกรรมเริ่มต้นไม่สำเร็จ"},500);
       await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:created.data.id,event_type:"BATCH_CREATED",target_type:"BATCH",target_id:created.data.id,after_json:{name,external_code:code,start_date:startDate,end_date:endDate,status},reason:"Created from Setup Center"});
-      return reply({saved:true,message:"สร้างรุ่นและการตั้งค่ากิจกรรมเริ่มต้นเรียบร้อยแล้ว"});
+      return reply({saved:true,external_code:code,message:"สร้างรุ่น "+code+" และการตั้งค่ากิจกรรมเริ่มต้นเรียบร้อยแล้ว"});
     }
     const batchId=clean(payload.batch_id),old=await db.from("batches").select("id,name,external_code,start_date,end_date,status").eq("id",batchId).eq("program_id",programId).is("deleted_at",null).maybeSingle();
     if(!old.data)return reply({error:"ไม่พบรุ่นที่เลือก"},404);
