@@ -62,7 +62,7 @@
     document.body.append(root);
     root.querySelector("#sm-close").onclick=()=>{root.remove();root=null;};
     root.querySelector("#sm-create-client").onclick=e=>runOnce(e,createClient);root.querySelector("#sm-create-program").onclick=e=>runOnce(e,createProgram);root.querySelector("#sm-create-batch").onclick=e=>runOnce(e,createBatch);
-    root.querySelector("#sm-client").onchange=render;root.querySelector("#sm-program").onchange=render;
+    root.querySelector("#sm-client").onchange=()=>{closeEditor();root.querySelector("#sm-notice").style.display="none";render();};root.querySelector("#sm-program").onchange=()=>{closeEditor();root.querySelector("#sm-notice").style.display="none";render();};
     await load();
   }
   window.openSetupManager=open;
