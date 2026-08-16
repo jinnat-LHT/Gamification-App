@@ -43,7 +43,7 @@
     editor().querySelector("#sm-editor-save").onclick=event=>runOnce(event,async()=>{try{const startDate=editor().querySelector("#sm-edit-batch-start").value,endDate=editor().querySelector("#sm-edit-batch-end").value;if(startDate&&endDate&&endDate<startDate){notice("วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น");return;}const r=await invoke({action:"update_batch",batch_id:b.id,program_id:b.program_id,name:editor().querySelector("#sm-edit-batch-name").value,external_code:b.external_code,start_date:startDate,end_date:endDate,status:b.status});notice(r.message,true);closeEditor();await load();}catch(e){notice(e.message);}});
     editor().scrollIntoView({behavior:"smooth",block:"nearest"});
   }
-  async function completeBatch(b){if(!confirm("ยืนยันจบรุ่น "+b.name+"? ผู้เรียนจะไม่สามารถทำกิจกรรมต่อได้"))return;try{const r=await invoke({action:"complete_batch",batch_id:b.id,program_id:b.program_id});notice(r.message,true);await load();}catch(e){notice(e.message);}}
+  async function completeBatch(b){const detail="กลุ่ม "+(b.group_count||0)+" · ผู้เรียน "+(b.learner_count||0)+" · กิจกรรมที่เปิด "+(b.enabled_activity_count||0);if(!confirm("ยืนยันจบรุ่น "+b.name+"?\n"+detail+"\n\nผู้เรียนจะไม่สามารถทำกิจกรรมต่อได้ และการจบรุ่นไม่สามารถย้อนกลับจากหน้านี้"))return;try{const r=await invoke({action:"complete_batch",batch_id:b.id,program_id:b.program_id});notice(r.message,true);await load();}catch(e){notice(e.message);}}
   async function runOnce(event,task){
     const button=event.currentTarget;
     if(button.disabled)return;
