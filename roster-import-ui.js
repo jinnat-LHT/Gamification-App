@@ -142,6 +142,8 @@
     };
   }
 
+  window.openRosterImport = openModal;
+
   document.addEventListener("DOMContentLoaded", () => {
     const nav = document.getElementById("desktopNav");
     if (!nav || document.getElementById("nav-roster-import")) return;
