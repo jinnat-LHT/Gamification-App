@@ -12,7 +12,7 @@ Deno.serve(async req=>{
   const db=createClient(url,secret,{auth:{persistSession:false}}),payload=await req.json().catch(()=>({})),batchId=String(payload.batch_id??""),roles=await rolesFor(db,user.id),scope=roles&&batchId?await scopeForBatch(db,roles,batchId):null;
   if(!scope)return reply({error:"Admin access to this batch is required"},403);
   const action=String(payload.action??"list");
-  const enrollments=await db.from("batch_learners").select("id,learner_id,group_id,enrollment_status").eq("batch_id",batchId).eq("enrollment_status","ACTIVE");
+  const enrollments=await db.from("batch_learners").select("id,learner_id,group_id,enrollment_status").eq("batch_id",batchId).in("enrollment_status",["INVITED","ACTIVE"]);
   if(enrollments.error)return reply({error:"Could not load active learners"},500);
   const learnerIds=(enrollments.data??[]).map((x:any)=>x.learner_id),batchLearnerIds=(enrollments.data??[]).map((x:any)=>x.id),groupIds=[...new Set((enrollments.data??[]).map((x:any)=>x.group_id))];
   const [accounts,groups,transactions]=await Promise.all([
@@ -29,7 +29,7 @@ Deno.serve(async req=>{
     const groupId=String(payload.group_id??""),reason=String(payload.reason??"Bonus Group Score").trim().slice(0,250)||"Bonus Group Score";
     const eligible=learners.filter((x:any)=>x.group_id===groupId&&x.rapid_awards<5);
     if(!groupMap.has(groupId))return reply({error:"Selected group does not belong to this batch"},422);
-    if(!eligible.length)return reply({error:"สมาชิกในกลุ่มได้รับ Bonus Group Score ครบ 5 ครั้งแล้ว"},422);
+    if(!eligible.length)return reply({error:"ไม่มีผู้เรียนในกลุ่มที่ยังรับ Bonus Group Score ได้"},422);
     const rows=eligible.map((x:any)=>({client_organization_id:scope.client.id,batch_id:batchId,batch_learner_id:x.id,source_type:"RAPID_GROUP",amount:1000,reason,idempotency_key:"rapid-group:"+batchId+":"+groupId+":"+x.id+":"+(x.rapid_awards+1),created_by:user.id}));
     const saved=await db.from("xp_transactions").insert(rows);if(saved.error)return reply({error:"Could not award Bonus Group Score"},500);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"RAPID_GROUP_SCORE_AWARDED",target_type:"GROUP",target_id:groupId,after_json:{recipients:eligible.length,xp_per_learner:1000},reason});
@@ -39,7 +39,7 @@ Deno.serve(async req=>{
     const learnerId=String(payload.batch_learner_id??""),amount=Number(payload.amount),reason=String(payload.reason??"").trim().slice(0,250);
     if(!Number.isInteger(amount)||amount===0||Math.abs(amount)>10000)return reply({error:"จำนวน XP ต้องเป็นจำนวนเต็มระหว่าง -10,000 ถึง 10,000 และไม่ใช่ 0"},422);
     if(!reason)return reply({error:"กรุณาระบุเหตุผลในการปรับ XP"},422);
-    if(!learners.some((x:any)=>x.id===learnerId))return reply({error:"Learner not found in active batch"},404);
+    if(!learners.some((x:any)=>x.id===learnerId))return reply({error:"Learner not found in this batch"},404);
     const saved=await db.from("xp_transactions").insert({client_organization_id:scope.client.id,batch_id:batchId,batch_learner_id:learnerId,source_type:"LIVE_ADJUSTMENT",amount,reason,idempotency_key:"live-adjustment:"+crypto.randomUUID(),created_by:user.id});
     if(saved.error)return reply({error:"Could not adjust XP"},500);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"LIVE_XP_ADJUSTED",target_type:"BATCH_LEARNER",target_id:learnerId,after_json:{amount},reason});
