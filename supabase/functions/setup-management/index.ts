@@ -106,7 +106,7 @@ Deno.serve(async req=>{
   if(action==="create_batch"||action==="update_batch"){
     const programId=clean(payload.program_id),scope=await scopeForProgram(db,roles,programId);
     if(!scope)return reply({error:"ไม่มีสิทธิ์จัดการโปรแกรมนี้"},403);
-    const name=clean(payload.name),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null;let status=["DRAFT","READY","ACTIVE","COMPLETED","ARCHIVED"].includes(clean(payload.status))?clean(payload.status):"DRAFT";
+    const name=clean(payload.name),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null;let status="DRAFT";
     let code=clean(payload.external_code,40).toUpperCase().replace(/[^A-Z0-9_-]/g,"");
     if(!name)return reply({error:"กรุณาระบุชื่อรุ่น"},422);
     if(action==="create_batch"){
