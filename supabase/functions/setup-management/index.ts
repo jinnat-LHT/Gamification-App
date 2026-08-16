@@ -83,10 +83,22 @@ Deno.serve(async req=>{
     return reply({saved:true,message:"บันทึกข้อมูลโปรแกรมเรียบร้อยแล้ว"});
   }
 
+  if(action==="complete_batch"){
+    const programId=clean(payload.program_id),batchId=clean(payload.batch_id),scope=await scopeForProgram(db,roles,programId);
+    if(!scope)return reply({error:"ไม่มีสิทธิ์จัดการโปรแกรมนี้"},403);
+    const batch=await db.from("batches").select("id,name,status").eq("id",batchId).eq("program_id",programId).is("deleted_at",null).maybeSingle();
+    if(!batch.data)return reply({error:"ไม่พบรุ่นที่เลือก"},404);
+    if(batch.data.status==="ARCHIVED")return reply({error:"ไม่สามารถจบรุ่นที่ถูกเก็บถาวรแล้ว"},422);
+    const completed=await db.from("batches").update({status:"COMPLETED",completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",batchId);
+    if(completed.error)return reply({error:"ไม่สามารถจบรุ่นได้"},500);
+    await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"BATCH_COMPLETED",target_type:"BATCH",target_id:batchId,before_json:{status:batch.data.status},after_json:{status:"COMPLETED"},reason:"Admin confirmed batch completion"});
+    return reply({saved:true,message:"จบรุ่น "+batch.data.name+" เรียบร้อยแล้ว"});
+  }
+
   if(action==="create_batch"||action==="update_batch"){
     const programId=clean(payload.program_id),scope=await scopeForProgram(db,roles,programId);
     if(!scope)return reply({error:"ไม่มีสิทธิ์จัดการโปรแกรมนี้"},403);
-    const name=clean(payload.name),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null,status=["DRAFT","READY","ACTIVE","COMPLETED","ARCHIVED"].includes(clean(payload.status))?clean(payload.status):"DRAFT";
+    const name=clean(payload.name),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null;let status=["DRAFT","READY","ACTIVE","COMPLETED","ARCHIVED"].includes(clean(payload.status))?clean(payload.status):"DRAFT";
     let code=clean(payload.external_code,40).toUpperCase().replace(/[^A-Z0-9_-]/g,"");
     if(!name)return reply({error:"กรุณาระบุชื่อรุ่น"},422);
     if(action==="create_batch"){
@@ -106,6 +118,7 @@ Deno.serve(async req=>{
     }
     const batchId=clean(payload.batch_id),old=await db.from("batches").select("id,name,external_code,start_date,end_date,status").eq("id",batchId).eq("program_id",programId).is("deleted_at",null).maybeSingle();
     if(!old.data)return reply({error:"ไม่พบรุ่นที่เลือก"},404);
+    status=old.data.status;
     const updated=await db.from("batches").update({name,external_code:code,start_date:startDate,end_date:endDate,status,updated_at:new Date().toISOString()}).eq("id",batchId);if(updated.error)return reply({error:updated.error.code==="23505"?"รหัสรุ่นซ้ำในโปรแกรมนี้":"ไม่สามารถบันทึกรุ่นได้"},422);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"BATCH_UPDATED",target_type:"BATCH",target_id:batchId,before_json:old.data,after_json:{name,external_code:code,start_date:startDate,end_date:endDate,status},reason:"Updated from Setup Center"});
     return reply({saved:true,message:"บันทึกรุ่นเรียนเรียบร้อยแล้ว"});
