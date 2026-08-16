@@ -90,11 +90,11 @@
 
   function openModal() {
     let modal = document.getElementById("rosterImportModal");
-    if (modal) return modal.classList.remove("hidden");
+    if (modal) { modal.classList.remove("hidden"); modal.style.setProperty("z-index", "9999", "important"); return; }
     modal = document.createElement("div");
     modal.id = "rosterImportModal";
     modal.className = "fixed inset-0 z-50 bg-slate-950/80 backdrop-blur p-4 overflow-y-auto";
-    modal.style.zIndex = "1100";
+    modal.style.setProperty("z-index", "9999", "important");
     modal.innerHTML = `<div class="max-w-2xl mx-auto my-8 glass-card p-6 rounded-2xl">
       <div class="flex justify-between gap-4">
         <div><h2 class="text-xl font-bold">นำเข้าผู้เรียน</h2>
