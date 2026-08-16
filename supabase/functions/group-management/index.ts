@@ -47,5 +47,14 @@ Deno.serve(async req=>{
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"GROUP_ARCHIVED",target_type:"GROUP",target_id:groupId,reason:"Archived empty group from Admin"});
     return reply({saved:true,message:"ปิดกลุ่มเรียบร้อยแล้ว"});
   }
+  if(action==="activate"){
+    const groupId=clean(payload.group_id),group=await db.from("groups").select("id,name,status").eq("id",groupId).eq("batch_id",batchId).is("deleted_at",null).maybeSingle();
+    if(!group.data)return reply({error:"ไม่พบกลุ่มที่เลือก"},404);
+    if(group.data.status==="ACTIVE")return reply({saved:true,message:"กลุ่มนี้เปิดใช้งานอยู่แล้ว"});
+    const activated=await db.from("groups").update({status:"ACTIVE",updated_at:new Date().toISOString()}).eq("id",groupId);
+    if(activated.error)return reply({error:"ไม่สามารถเปิดใช้กลุ่มได้"},500);
+    await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"GROUP_REACTIVATED",target_type:"GROUP",target_id:groupId,before_json:{status:group.data.status},after_json:{status:"ACTIVE"},reason:"Reactivated from Admin group management"});
+    return reply({saved:true,message:"เปิดใช้กลุ่ม "+group.data.name+" อีกครั้งเรียบร้อยแล้ว"});
+  }
   return reply({error:"Unsupported action"},400);
 });
