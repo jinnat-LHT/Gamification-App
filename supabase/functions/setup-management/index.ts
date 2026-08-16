@@ -109,6 +109,7 @@ Deno.serve(async req=>{
     const name=clean(payload.name),startDate=clean(payload.start_date,10)||null,endDate=clean(payload.end_date,10)||null;let status="DRAFT";
     let code=clean(payload.external_code,40).toUpperCase().replace(/[^A-Z0-9_-]/g,"");
     if(!name)return reply({error:"กรุณาระบุชื่อรุ่น"},422);
+    if(startDate&&endDate&&endDate<startDate)return reply({error:"วันสิ้นสุดต้องไม่ก่อนวันเริ่มต้น"},422);
     if(action==="create_batch"){
       const existing=await db.from("batches").select("external_code").eq("program_id",programId).is("deleted_at",null);
       if(existing.error)return reply({error:"ไม่สามารถสร้างรหัสรุ่นได้"},500);
