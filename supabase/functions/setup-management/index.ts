@@ -4,6 +4,7 @@ const ORIGIN="https://jinnat-lht.github.io";
 const headers={"Access-Control-Allow-Origin":ORIGIN,"Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS"};
 const reply=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{...headers,"Content-Type":"application/json"}});
 const clean=(v:unknown,max=160)=>String(v??"").trim().slice(0,max);
+const batchPrefix=(name:string)=>{const words=String(name??"").toUpperCase().match(/[A-Z0-9]+/g)??[];const initials=words.length>1?words.map(word=>word[0]).join(""):words.join("");return (initials||"BATCH").slice(0,12);};
 
 async function getAdmin(db:any,userId:string){
   const account=await db.from("user_accounts").select("account_type,status").eq("id",userId).maybeSingle();
