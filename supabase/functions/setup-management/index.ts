@@ -18,7 +18,7 @@ async function scopeForClient(db:any,roles:any[],clientId:string){
   return ok?client.data:null;
 }
 async function scopeForProgram(db:any,roles:any[],programId:string){
-  const program=await db.from("programs").select("id,client_organization_id").eq("id",programId).is("deleted_at",null).maybeSingle();
+  const program=await db.from("programs").select("id,name,client_organization_id").eq("id",programId).is("deleted_at",null).maybeSingle();
   if(!program.data)return null;
   const client=await db.from("client_organizations").select("id,provider_organization_id").eq("id",program.data.client_organization_id).is("deleted_at",null).maybeSingle();
   if(!client.data)return null;
