@@ -97,6 +97,7 @@ Deno.serve(async req=>{
     const batch=await db.from("batches").select("id,name,status").eq("id",batchId).eq("program_id",programId).is("deleted_at",null).maybeSingle();
     if(!batch.data)return reply({error:"ไม่พบรุ่นที่เลือก"},404);
     if(batch.data.status==="ARCHIVED")return reply({error:"ไม่สามารถจบรุ่นที่ถูกเก็บถาวรแล้ว"},422);
+    if(batch.data.status==="COMPLETED")return reply({error:"รุ่นนี้จบแล้ว"},422);
     const completed=await db.from("batches").update({status:"COMPLETED",completed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq("id",batchId);
     if(completed.error)return reply({error:"ไม่สามารถจบรุ่นได้"},500);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"BATCH_COMPLETED",target_type:"BATCH",target_id:batchId,before_json:{status:batch.data.status},after_json:{status:"COMPLETED"},reason:"Admin confirmed batch completion"});
