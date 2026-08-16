@@ -2104,7 +2104,7 @@
       growthChartInstance = new Chart(ctx, {
         type: 'radar',
         data: {
-          labels: [
+          labels: window.selfAssessmentChartLabels || [
             'Strategic Thinking',
             'Coaching & Feedback',
             'Growth Mindset',
@@ -2851,6 +2851,7 @@
   <script src="./supabase-learner-auth.js"></script>
   <script src="./post-test-ui.js"></script>
   <script src="./assignment-ui.js"></script>
-  <script src="./self-assessment-ui.js?v=20260816-2"></script>
+  <script src="./self-assessment-ui.js?v=20260816-3"></script>
+  <script src="./self-assessment-chart.js?v=20260816-1"></script>
 </body>
 </html>
