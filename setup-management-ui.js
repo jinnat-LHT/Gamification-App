@@ -40,6 +40,8 @@
     await load();
   }
   window.openSetupManager=open;
+  window.openProgramModal=async()=>{await open();root?.querySelector("#sm-program-name")?.focus();};
+  window.openBatchModal=async()=>{await open();root?.querySelector("#sm-batch-name")?.focus();};
   function boot(){const nav=document.getElementById("nav-admin-setup");if(!nav||nav.dataset.setupManager)return;nav.dataset.setupManager="1";nav.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();open();},true);}
   document.addEventListener("DOMContentLoaded",()=>setTimeout(boot,800));setTimeout(boot,1800);
 })();
