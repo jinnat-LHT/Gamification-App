@@ -66,7 +66,8 @@ Deno.serve(async(req)=>{
   const type=String(payload.type??"");if(!["SELF_BEFORE","SELF_AFTER"].includes(type))return out({error:"Invalid Self-assessment type"},422);
   const config=await db.from("batch_activity_configs").select("id,config_json,enabled,gate_state").eq("batch_id",enrollment.batch_id).eq("activity_type",type).maybeSingle();
   if(!config.data||!config.data.enabled||config.data.gate_state!=="OPEN")return out({error:"Self-assessment is not open"},403);
-  const criteria=Array.isArray(config.data.config_json?.criteria)&&config.data.config_json.criteria.length===5?config.data.config_json.criteria:defaultCriteria;\n  const scale_labels=config.data.config_json?.scale_labels??criteria[0]?.scale_labels??defaultScaleLabels;
+  const criteria=Array.isArray(config.data.config_json?.criteria)&&config.data.config_json.criteria.length===5?config.data.config_json.criteria:defaultCriteria;
+  const scale_labels=config.data.config_json?.scale_labels??criteria[0]?.scale_labels??defaultScaleLabels;
   const existing=await db.from("submissions").select("id,status,submitted_at").eq("activity_config_id",config.data.id).eq("batch_learner_id",enrollment.id).maybeSingle();
   if(action==="start")return out({type,criteria,scale_labels,submitted:existing.data?.status==="SUBMITTED",submitted_at:existing.data?.submitted_at??null});
   if(existing.data?.status==="SUBMITTED")return out({error:"คุณส่งแบบประเมินนี้แล้ว"},409);
