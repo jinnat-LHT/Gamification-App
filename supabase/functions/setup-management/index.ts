@@ -48,7 +48,15 @@ Deno.serve(async req=>{
     const programs=clients.length?(await db.from("programs").select("id,client_organization_id,name,description,status").in("client_organization_id",clients.map(x=>x.id)).is("deleted_at",null).order("name")).data??[]:[];
     const programIds=programs.map((p:any)=>p.id);
     const batches=programIds.length?(await db.from("batches").select("id,program_id,name,external_code,start_date,end_date,status").in("program_id",programIds).is("deleted_at",null).order("created_at")).data??[]:[];
-    return reply({clients,programs,batches,can_create_client:providerIds.length>0});
+    const batchIds=batches.map((b:any)=>b.id);
+    const [groupRows,learnerRows,activityRows]=batchIds.length?await Promise.all([
+      db.from("groups").select("batch_id").in("batch_id",batchIds).is("deleted_at",null).eq("status","ACTIVE"),
+      db.from("batch_learners").select("batch_id").in("batch_id",batchIds).in("enrollment_status",["INVITED","ACTIVE"]),
+      db.from("batch_activity_configs").select("batch_id").in("batch_id",batchIds).eq("enabled",true)
+    ]):[{data:[]},{data:[]},{data:[]}];
+    const count=(rows:any[])=>{const map=new Map<string,number>();for(const row of rows??[])map.set(row.batch_id,(map.get(row.batch_id)??0)+1);return map;};
+    const groupsByBatch=count(groupRows.data??[]),learnersByBatch=count(learnerRows.data??[]),activitiesByBatch=count(activityRows.data??[]);
+    return reply({clients,programs,batches:batches.map((batch:any)=>({...batch,group_count:groupsByBatch.get(batch.id)??0,learner_count:learnersByBatch.get(batch.id)??0,enabled_activity_count:activitiesByBatch.get(batch.id)??0})),can_create_client:providerIds.length>0});
   }
 
   if(action==="create_client"){
