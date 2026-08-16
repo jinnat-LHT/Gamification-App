@@ -24,8 +24,9 @@ Deno.serve(async req=>{
   if(action==="create"){
     const name=clean(payload.name).slice(0,120);
     if(!name)return reply({error:"กรุณาระบุชื่อกลุ่ม"},422);
-    const existing=await db.from("groups").select("external_code").eq("batch_id",batchId).is("deleted_at",null);
+    const existing=await db.from("groups").select("external_code,name").eq("batch_id",batchId).is("deleted_at",null);
     if(existing.error)return reply({error:"ไม่สามารถสร้างรหัสกลุ่มได้"},500);
+    if((existing.data??[]).some((row:any)=>String(row.name??"").trim().toLocaleLowerCase()===name.toLocaleLowerCase()))return reply({error:"มีชื่อกลุ่มนี้ใน Batch แล้ว"},422);
     const max=(existing.data??[]).reduce((value:number,row:any)=>{const match=String(row.external_code??"").match(/^GROUP-(\\d+)$/);return match?Math.max(value,Number(match[1])):value;},0);
     const code="GROUP-"+String(max+1).padStart(3,"0");
     const created=await db.from("groups").insert({batch_id:batchId,name,external_code:code,status:"ACTIVE"}).select("id,name").maybeSingle();
