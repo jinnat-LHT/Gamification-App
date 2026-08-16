@@ -127,6 +127,7 @@ Deno.serve(async req=>{
     const batchId=clean(payload.batch_id),old=await db.from("batches").select("id,name,external_code,start_date,end_date,status").eq("id",batchId).eq("program_id",programId).is("deleted_at",null).maybeSingle();
     if(!old.data)return reply({error:"ไม่พบรุ่นที่เลือก"},404);
     status=old.data.status;
+    code=old.data.external_code;
     const updated=await db.from("batches").update({name,external_code:code,start_date:startDate,end_date:endDate,status,updated_at:new Date().toISOString()}).eq("id",batchId);if(updated.error)return reply({error:updated.error.code==="23505"?"รหัสรุ่นซ้ำในโปรแกรมนี้":"ไม่สามารถบันทึกรุ่นได้"},422);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"BATCH_UPDATED",target_type:"BATCH",target_id:batchId,before_json:old.data,after_json:{name,external_code:code,start_date:startDate,end_date:endDate,status},reason:"Updated from Setup Center"});
     return reply({saved:true,message:"บันทึกรุ่นเรียนเรียบร้อยแล้ว"});
