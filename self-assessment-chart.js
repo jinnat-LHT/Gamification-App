@@ -2,13 +2,13 @@
   const types={SELF_BEFORE:"behaviorBeforeScores",SELF_AFTER:"behaviorAfterScores"};
   async function refreshSelfAssessmentChart(){
     const client=window.leadershipQuestSupabase,account=window.leadershipQuestLearner;
-    if(!client||!account?.batch_learner_id||!window.STATE?.currentUser)return;
+    if(!client||!account?.batch_learner_id||typeof STATE==="undefined"||!STATE.currentUser)return;
     const [submissions,configs]=await Promise.all([
       client.from("submissions").select("activity_type,status,submission_attempts(response_json,attempt_number)").eq("batch_learner_id",account.batch_learner_id).in("activity_type",["SELF_BEFORE","SELF_AFTER"]),
       client.from("batch_activity_configs").select("activity_type,config_json").eq("batch_id",account.batch_id).in("activity_type",["SELF_BEFORE","SELF_AFTER"])
     ]);
     if(submissions.error||configs.error)return;
-    const state=window.STATE.currentUser;
+    const state=STATE.currentUser;
     const beforeConfig=(configs.data||[]).find(row=>row.activity_type==="SELF_BEFORE")||(configs.data||[])[0];
     const criteria=beforeConfig?.config_json?.criteria||[];
     const fallback=["strategic_thinking","coaching","growth_mindset","team_execution","agility"];
@@ -22,7 +22,7 @@
       if(row.activity_type==="SELF_BEFORE")state.hasBehaviorBefore=true;
       if(row.activity_type==="SELF_AFTER")state.hasBehaviorAfter=true;
     });
-    if(typeof window.renderDashboard==="function")window.renderDashboard();
+    if(typeof renderDashboard==="function")renderDashboard();
   }
   window.addEventListener("self-assessment:submitted",refreshSelfAssessmentChart);
   document.addEventListener("DOMContentLoaded",()=>setTimeout(refreshSelfAssessmentChart,1800));
