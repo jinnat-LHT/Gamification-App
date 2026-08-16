@@ -75,6 +75,10 @@ Deno.serve(async req=>{
     if(!scope)return reply({error:"ไม่มีสิทธิ์จัดการลูกค้านี้"},403);
     const name=clean(payload.name),description=clean(payload.description,1200),status=["DRAFT","ACTIVE","ARCHIVED"].includes(clean(payload.status))?clean(payload.status):"DRAFT";
     if(!name)return reply({error:"กรุณาระบุชื่อโปรแกรม"},422);
+    const programIdForDuplicate=clean(payload.program_id);
+    const siblingPrograms=await db.from("programs").select("id,name").eq("client_organization_id",clientId).is("deleted_at",null);
+    if(siblingPrograms.error)return reply({error:"ไม่สามารถตรวจสอบชื่อโปรแกรมได้"},500);
+    if((siblingPrograms.data??[]).some((row:any)=>row.id!==programIdForDuplicate&&String(row.name??"").trim().toLocaleLowerCase()===name.toLocaleLowerCase()))return reply({error:"มีชื่อโปรแกรมนี้สำหรับลูกค้ารายนี้แล้ว"},422);
     if(action==="create_program"){
       const created=await db.from("programs").insert({client_organization_id:clientId,name,description,status}).select("id,name").maybeSingle();
       if(created.error)return reply({error:"ไม่สามารถสร้างโปรแกรมได้"},500);
