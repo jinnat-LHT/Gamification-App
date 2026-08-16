@@ -31,8 +31,7 @@
     const labels=vals.map((x,i)=>{const a=(-Math.PI/2)+(Math.PI*2*i/n),lx=cx+Math.cos(a)*(r+36),ly=cy+Math.sin(a)*(r+36);return '<text x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'" fill="#dbeafe" font-size="12" text-anchor="middle">'+esc(x.title).slice(0,22)+'</text>';}).join("");
     return '<svg viewBox="0 0 470 420" width="100%" height="350" role="img"><g fill="none" stroke="#384b70">'+[.2,.4,.6,.8,1].map(v=>'<polygon points="'+polygon(v)+'"/>').join("")+'</g><polygon points="'+series("before")+'" fill="rgba(34,211,238,.22)" stroke="#22d3ee" stroke-width="3"/><polygon points="'+series("after")+'" fill="rgba(192,132,252,.2)" stroke="#c084fc" stroke-width="3"/>'+labels+'</svg>';
   }
-  function printPdf(data){
-    const win=window.open("","_blank","noopener,noreferrer");
+  function printPdf(data, win){
     if(!win) throw new Error("เบราว์เซอร์บล็อกหน้าต่าง PDF กรุณาอนุญาต Pop-up แล้วลองใหม่");
     const o=data.overview||{}, criteria=data.self_assessment?.criteria||[];
     const stat=(label,value,accent)=>'<div class="stat"><span>'+esc(label)+'</span><b style="color:'+accent+'">'+esc(value??"—")+'</b></div>';
@@ -43,8 +42,22 @@
   }
   async function exportReport(root,kind){
     const select=root.querySelector("#sar-batch"),host=root.querySelector("#sar-result");
-    host.innerHTML='<div class="sar-empty">กำลังสร้างรายงานรวม...</div>';
-    try{const data=await callExport({batch_id:select.value});if(kind==="pdf") printPdf(data);else downloadCsv(data);host.innerHTML='<div class="sar-empty" style="color:#6ee7b7">สร้างรายงานเรียบร้อยแล้ว</div>';}catch(e){host.innerHTML='<div class="sar-empty">'+esc(e.message)+'</div>';}
+    let pdfWindow=null;
+    try{
+      if(kind==="pdf"){
+        pdfWindow=window.open("","_blank","width=1200,height=900");
+        if(!pdfWindow) throw new Error("เบราว์เซอร์บล็อกหน้าต่าง PDF กรุณาอนุญาต Pop-up แล้วลองใหม่");
+        pdfWindow.document.write('<!doctype html><title>กำลังสร้าง PDF</title><body style="font-family:Arial;background:#071322;color:#e2e8f0;padding:32px">กำลังสร้างรายงาน PDF...</body>');
+        pdfWindow.document.close();
+      }
+      host.innerHTML='<div class="sar-empty">กำลังสร้างรายงานรวม...</div>';
+      const data=await callExport({batch_id:select.value});
+      if(kind==="pdf") printPdf(data,pdfWindow); else downloadCsv(data);
+      host.innerHTML='<div class="sar-empty" style="color:#6ee7b7">สร้างรายงานเรียบร้อยแล้ว</div>';
+    }catch(e){
+      if(pdfWindow&&!pdfWindow.closed) pdfWindow.close();
+      host.innerHTML='<div class="sar-empty">'+esc(e.message)+'</div>';
+    }
   }
   async function open(){
     const root=document.createElement("div");root.className="sar-modal";
