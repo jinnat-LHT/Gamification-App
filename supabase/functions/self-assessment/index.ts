@@ -53,12 +53,12 @@ Deno.serve(async(req)=>{
     if(!roles||!batchId||!(await canManageBatch(db,roles,batchId)))return out({error:"Administrator access to this batch is required"},403);
     const configs=await db.from("batch_activity_configs").select("id,activity_type,config_json").eq("batch_id",batchId).in("activity_type",["SELF_BEFORE","SELF_AFTER"]);
     if(configs.error)return out({error:"Could not load Self-assessment configuration"},500);
-    if(action==="criteria-get"){const source=(configs.data??[]).find((row:any)=>Array.isArray(row.config_json?.criteria)&&row.config_json.criteria.length===5);return out({criteria:source?.config_json?.criteria??defaultCriteria,scale_labels:source?.config_json?.scale_labels??source?.config_json?.criteria?.[0]?.scale_labels??defaultScaleLabels,items:configs.data??[]});}
+    if(action==="criteria-get"){const source=(configs.data??[]).find((row:any)=>Array.isArray(row.config_json?.criteria)&&row.config_json.criteria.length===5);return out({criteria:source?.config_json?.criteria??defaultCriteria,scale_labels:source?.config_json?.scale_labels??source?.config_json?.criteria?.[0]?.scale_labels??defaultScaleLabels,instructions:source?.config_json?.instructions??"กรุณาประเมินพฤติกรรมของตัวท่านในช่วง 3 เดือนที่ผ่านมา ในหัวข้อต่อไปนี้ โดยมีระดับคะแนน 1–5",items:configs.data??[]});}
     try{
-      const criteria=normaliseCriteria(payload.criteria),scale_labels=normaliseScaleLabels(payload.scale_labels);if((configs.data??[]).length===0)return out({error:"ยังไม่มี Self-assessment ใน Batch นี้"},404);
-      for(const config of configs.data??[]){const update=await db.from("batch_activity_configs").update({config_json:{...(config.config_json??{}),criteria,scale_labels}}).eq("id",config.id);if(update.error)throw new Error("Could not save Self-assessment configuration");}
-      await db.from("audit_events").insert({actor_user_id:user.id,batch_id:batchId,event_type:"SELF_ASSESSMENT_CRITERIA_UPDATED",target_type:"batch",target_id:batchId,after_json:{criteria,scale_labels}});
-      return out({criteria,scale_labels});
+      const criteria=normaliseCriteria(payload.criteria),scale_labels=normaliseScaleLabels(payload.scale_labels),instructions=String(payload.instructions??"").trim();if(!instructions)throw new Error("กรุณาระบุคำชี้แจงแบบประเมิน");if((configs.data??[]).length===0)return out({error:"ยังไม่มี Self-assessment ใน Batch นี้"},404);
+      for(const config of configs.data??[]){const update=await db.from("batch_activity_configs").update({config_json:{...(config.config_json??{}),criteria,scale_labels,instructions}}).eq("id",config.id);if(update.error)throw new Error("Could not save Self-assessment configuration");}
+      await db.from("audit_events").insert({actor_user_id:user.id,batch_id:batchId,event_type:"SELF_ASSESSMENT_CRITERIA_UPDATED",target_type:"batch",target_id:batchId,after_json:{criteria,scale_labels,instructions}});
+      return out({criteria,scale_labels,instructions});
     }catch(error){return out({error:error instanceof Error?error.message:"Could not save criteria"},422);}
   }
   if(!["start","submit"].includes(action))return out({error:"Unsupported action"},400);
@@ -68,8 +68,9 @@ Deno.serve(async(req)=>{
   if(!config.data||!config.data.enabled||config.data.gate_state!=="OPEN")return out({error:"Self-assessment is not open"},403);
   const criteria=Array.isArray(config.data.config_json?.criteria)&&config.data.config_json.criteria.length===5?config.data.config_json.criteria:defaultCriteria;
   const scale_labels=config.data.config_json?.scale_labels??criteria[0]?.scale_labels??defaultScaleLabels;
+  const instructions=config.data.config_json?.instructions??"กรุณาประเมินพฤติกรรมของตัวท่านในช่วง 3 เดือนที่ผ่านมา ในหัวข้อต่อไปนี้ โดยมีระดับคะแนน 1–5";
   const existing=await db.from("submissions").select("id,status,submitted_at").eq("activity_config_id",config.data.id).eq("batch_learner_id",enrollment.id).maybeSingle();
-  if(action==="start")return out({type,criteria,scale_labels,submitted:existing.data?.status==="SUBMITTED",submitted_at:existing.data?.submitted_at??null});
+  if(action==="start")return out({type,criteria,scale_labels,instructions,submitted:existing.data?.status==="SUBMITTED",submitted_at:existing.data?.submitted_at??null});
   if(existing.data?.status==="SUBMITTED")return out({error:"คุณส่งแบบประเมินนี้แล้ว"},409);
   try{
     const ratings:any=payload.ratings??{},response:any={};
