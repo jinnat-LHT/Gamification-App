@@ -10,6 +10,28 @@ const corsHeaders = {
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 const clean = (value: unknown) => String(value ?? "").trim();
 
+async function getAdminRoles(admin: any, userId: string) {
+  const { data: account } = await admin.from("user_accounts").select("id, account_type, status").eq("id", userId).maybeSingle();
+  if (!account || account.account_type !== "ADMIN" || account.status !== "ACTIVE") return null;
+  const { data: roles } = await admin.from("role_assignments").select("scope_type,provider_organization_id,client_organization_id,program_id,batch_id").eq("user_id", userId).eq("role", "ADMIN").is("revoked_at", null);
+  return roles ?? [];
+}
+async function resolveScopedBatch(admin: any, roles: any[], batchId: string) {
+  const { data: batch } = await admin.from("batches").select("id, program_id").eq("id", batchId).is("deleted_at", null).maybeSingle();
+  if (!batch) return null;
+  const { data: program } = await admin.from("programs").select("id, client_organization_id, current_version_id").eq("id", batch.program_id).is("deleted_at", null).maybeSingle();
+  if (!program) return null;
+  const { data: client } = await admin.from("client_organizations").select("id, provider_organization_id").eq("id", program.client_organization_id).is("deleted_at", null).maybeSingle();
+  if (!client) return null;
+  const allowed = roles.some((role: any) =>
+    (role.scope_type === "PROVIDER" && role.provider_organization_id === client.provider_organization_id) ||
+    (role.scope_type === "CLIENT_ORGANIZATION" && role.client_organization_id === client.id) ||
+    (role.scope_type === "PROGRAM" && role.program_id === program.id) ||
+    (role.scope_type === "BATCH" && role.batch_id === batch.id)
+  );
+  return allowed ? { batch, program, client } : null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
@@ -25,20 +47,20 @@ Deno.serve(async (req) => {
   if (!user) return json({ error: "Invalid session" }, 401);
 
   const admin = createClient(url, secretKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const { data: account } = await admin.from("user_accounts").select("id, account_type, status").eq("id", user.id).maybeSingle();
-  if (!account || account.account_type !== "ADMIN" || account.status !== "ACTIVE") return json({ error: "Admin access required" }, 403);
+  const roles = await getAdminRoles(admin, user.id);
+  if (!roles) return json({ error: "Admin access required" }, 403);
 
   const payload = await req.json().catch(() => ({}));
   const action = clean(payload.action || "validate").toLowerCase();
-  const batchCode = clean(payload.batch_code);
+  const batchId = clean(payload.batch_id);
   const rows: QuizRow[] = Array.isArray(payload.rows) ? payload.rows : [];
-  if (!batchCode || !rows.length) return json({ error: "batch_code and rows are required" }, 400);
+  if (!batchId || !rows.length) return json({ error: "กรุณาเลือก Batch และไฟล์คำถาม" }, 400);
   if (rows.length > 500) return json({ error: "Maximum 500 questions per import" }, 400);
 
-  const { data: batch } = await admin.from("batches").select("id, program_id").eq("external_code", batchCode).is("deleted_at", null).maybeSingle();
-  if (!batch) return json({ error: "Batch not found" }, 404);
-  const { data: program } = await admin.from("programs").select("id, client_organization_id, current_version_id").eq("id", batch.program_id).is("deleted_at", null).maybeSingle();
-  if (!program?.current_version_id) return json({ error: "Program has no current version" }, 422);
+  const scope = await resolveScopedBatch(admin, roles, batchId);
+  if (!scope) return json({ error: "ไม่มีสิทธิ์เข้าถึง Batch ที่เลือก" }, 403);
+  const batch = scope.batch, program = scope.program;
+  if (!program.current_version_id) return json({ error: "Program has no current version" }, 422);
 
   const errors: Array<{ row: number; field: string; message: string }> = [];
   const validRows = rows.map((row, index) => {
