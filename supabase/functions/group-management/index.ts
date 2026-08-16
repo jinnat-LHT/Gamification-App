@@ -22,12 +22,16 @@ Deno.serve(async req=>{
     return reply({groups:(groups.data??[]).map((g:any)=>({...g,member_count:counts.get(g.id)??0}))});
   }
   if(action==="create"){
-    const name=clean(payload.name).slice(0,120),code=clean(payload.external_code).toUpperCase().replace(/[^A-Z0-9_-]/g,"").slice(0,40);
-    if(!name||!code)return reply({error:"กรุณาระบุชื่อกลุ่มและรหัสกลุ่ม"},422);
+    const name=clean(payload.name).slice(0,120);
+    if(!name)return reply({error:"กรุณาระบุชื่อกลุ่ม"},422);
+    const existing=await db.from("groups").select("external_code").eq("batch_id",batchId).is("deleted_at",null);
+    if(existing.error)return reply({error:"ไม่สามารถสร้างรหัสกลุ่มได้"},500);
+    const max=(existing.data??[]).reduce((value:number,row:any)=>{const match=String(row.external_code??"").match(/^GROUP-(\\d+)$/);return match?Math.max(value,Number(match[1])):value;},0);
+    const code="GROUP-"+String(max+1).padStart(3,"0");
     const created=await db.from("groups").insert({batch_id:batchId,name,external_code:code,status:"ACTIVE"}).select("id,name").maybeSingle();
     if(created.error)return reply({error:created.error.code==="23505"?"รหัสกลุ่มซ้ำใน Batch นี้":"ไม่สามารถสร้างกลุ่มได้"},422);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"GROUP_CREATED",target_type:"GROUP",target_id:created.data?.id,after_json:{name,external_code:code},reason:"Created from Admin group management"});
-    return reply({saved:true,message:"สร้างกลุ่มเรียบร้อยแล้ว"});
+    return reply({saved:true,external_code:code,message:"สร้างกลุ่ม "+code+" เรียบร้อยแล้ว"});
   }
   if(action==="rename"){
     const groupId=clean(payload.group_id),name=clean(payload.name).slice(0,120);if(!groupId||!name)return reply({error:"กรุณาระบุชื่อกลุ่ม"},422);
