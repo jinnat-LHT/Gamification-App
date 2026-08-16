@@ -94,6 +94,7 @@
     modal = document.createElement("div");
     modal.id = "rosterImportModal";
     modal.className = "fixed inset-0 z-50 bg-slate-950/80 backdrop-blur p-4 overflow-y-auto";
+    modal.style.zIndex = "1100";
     modal.innerHTML = `<div class="max-w-2xl mx-auto my-8 glass-card p-6 rounded-2xl">
       <div class="flex justify-between gap-4">
         <div><h2 class="text-xl font-bold">นำเข้าผู้เรียน</h2>
