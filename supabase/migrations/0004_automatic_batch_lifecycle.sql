@@ -46,8 +46,12 @@ security definer
 set search_path = public
 as $$
 begin
-  perform public.refresh_batch_lifecycle(coalesce(new.batch_id,old.batch_id));
-  return coalesce(new,old);
+  if TG_OP = 'DELETE' then
+    perform public.refresh_batch_lifecycle(old.batch_id);
+    return old;
+  end if;
+  perform public.refresh_batch_lifecycle(new.batch_id);
+  return new;
 end;
 $$;
 
@@ -61,9 +65,10 @@ declare v_batch_id uuid;
 begin
   select s.batch_id into v_batch_id
   from public.attendance_sessions s
-  where s.id=coalesce(new.session_id,old.session_id);
+  where s.id = case when TG_OP = 'DELETE' then old.session_id else new.session_id end;
   if v_batch_id is not null then perform public.refresh_batch_lifecycle(v_batch_id); end if;
-  return coalesce(new,old);
+  if TG_OP = 'DELETE' then return old; end if;
+  return new;
 end;
 $$;
 
