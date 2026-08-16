@@ -37,7 +37,7 @@ Deno.serve(async req=>{
   if(action==="rename"){
     const groupId=clean(payload.group_id),name=clean(payload.name).slice(0,120);if(!groupId||!name)return reply({error:"กรุณาระบุชื่อกลุ่ม"},422);
     const current=await db.from("groups").select("id,name").eq("id",groupId).eq("batch_id",batchId).is("deleted_at",null).maybeSingle();if(!current.data)return reply({error:"ไม่พบกลุ่มที่เลือก"},404);
-    const updated=await db.from("groups").update({name,updated_at:new Date().toISOString()}).eq("id",groupId).select("id").maybeSingle();if(updated.error)return reply({error:"ไม่สามารถเปลี่ยนชื่อกลุ่มได้"},500);
+    const duplicate=await db.from("groups").select("id").eq("batch_id",batchId).is("deleted_at",null).neq("id",groupId).ilike("name",name).limit(1);if(duplicate.error)return reply({error:"ไม่สามารถตรวจสอบชื่อกลุ่มได้"},500);if(duplicate.data?.length)return reply({error:"มีชื่อกลุ่มนี้ใน Batch แล้ว"},422);const updated=await db.from("groups").update({name,updated_at:new Date().toISOString()}).eq("id",groupId).select("id").maybeSingle();if(updated.error)return reply({error:"ไม่สามารถเปลี่ยนชื่อกลุ่มได้"},500);
     await db.from("audit_events").insert({actor_user_id:user.id,client_organization_id:scope.client.id,batch_id:batchId,event_type:"GROUP_RENAMED",target_type:"GROUP",target_id:groupId,before_json:{name:current.data.name},after_json:{name},reason:"Renamed from Admin group management"});
     return reply({saved:true,message:"เปลี่ยนชื่อกลุ่มเรียบร้อยแล้ว"});
   }
