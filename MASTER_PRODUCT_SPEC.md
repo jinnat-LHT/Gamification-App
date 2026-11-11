@@ -2,281 +2,326 @@
 
 > **Canonical product reference** for the Leadership Quest enterprise LMS and gamification platform.
 >
-> This document supersedes separate Admin/User functional descriptions where they conflict. The Acceptance Checklist and Decision Log remain supporting evidence; this document is the source of truth for product scope and business rules.
+> This document supersedes separate Admin/User functional descriptions where they conflict. The Acceptance Checklist, Database Schema, and Decision Log remain supporting evidence; this document is the source of truth for product scope, business rules, and system behavior.
 >
-> **Status:** Phase 1 baseline — approved decisions incorporated on 15 Aug 2026.
+> **Status:** Active baseline — aligned with `main` branch (Phase 2 schema migrations 0001–0004 and Supabase Edge Functions implementation through 17 Aug 2026).
+
+---
 
 ## 1. Product intent
 
 Leadership Quest is an enterprise learning platform that helps an organization run leadership-development programs and sustain engagement through structured learning, evidence-based assessment, and gamification.
 
-The system must balance three goals:
+The system balances three core goals:
 
-1. **Learning integrity** — assessments, assignments, attendance, and outcomes are accurate and governed.
-2. **Operational efficiency** — administrators can create and run a Batch without manual, repetitive setup.
+1. **Learning integrity** — assessments, assignments, attendance, and outcomes are accurate, governed, and tamper-resistant.
+2. **Operational efficiency** — administrators can create and run Batches without manual, repetitive setup through bulk save, guided setup, and CSV import workflows.
 3. **Positive engagement** — XP, levels, group competition, and recognition encourage participation without allowing gamification to distort learning results.
+
+---
 
 ## 2. MVP scope and operating model
 
-- The platform is operated by **one provider organization** (your organization) and supports **multiple client organizations** from day one. Each client organization can have multiple Programs.
-- Client organizations do not receive self-service administration in MVP; provider Admin accounts manage only the client-organization scopes assigned to them.
-- Roles in MVP: **Admin**, **Facilitator**, and **Learner**. Multiple individual Admin accounts are supported. Facilitator access is explicitly assigned by Client Organization, Program, and Batch.
-- The product has separate Admin and Learner experiences connected to the same backend.
-- The current standalone HTML files are prototypes only. Production must use authenticated accounts, a backend API, a central database, and private file storage; `localStorage` is not a system of record.
-- Self-service client-organization administration, corporate SSO, real-time collaboration, and advanced automation are deferred unless explicitly approved.
+- **Provider Organization:** Operated by one provider organization (Learning Hub Thailand) supporting multiple client organizations from day one.
+- **Client Organizations:** Customer-data boundary. Each client organization can have multiple Programs and Batches. Client self-service administration is deferred in MVP; provider Admin accounts manage assigned client-organization scopes.
+- **Roles in MVP:**
+  - **Admin:** Full management across assigned Client Organizations, Programs, Batches, Groups, Quiz Bank, imports, scoring, gates, and reports.
+  - **Facilitator:** Assigned by Client Organization, Program, and Batch. Can review assignments, provide feedback, record attendance, and toggle gates within scope; cannot modify rosters, groups, or question banks.
+  - **Learner:** Completes tests, self-assessments, peer reviews, and assignments; views personal progress, review feedback, and the Batch leaderboard.
+- **Architecture:** Authenticated accounts using Supabase Auth, backend API via Supabase Edge Functions, Supabase PostgreSQL with Row-Level Security (RLS), and private Supabase Storage. Client-side `localStorage` is never a system of record.
+- **Deferred:** Corporate SSO, automated SCIM provisioning, client self-service admin, and real-time collaboration.
+
+---
 
 ## 3. Core hierarchy and data boundaries
 
 ```
 Provider Organization
-  └─ Client Organization
-       └─ Program
-       └─ Batch
-            └─ Group
-                 └─ Learner
+  └─ Client Organization (Customer Data Boundary)
+       └─ Program (Reusable Template & Content Bank)
+            └─ Batch (Delivery Cohort & Learning Context)
+                 └─ Group (Competition & Peer Review Team)
+                      └─ Learner (Enrolled Participant)
 ```
 
-- **Client Organization** is the customer-data boundary. Learners, Programs, Batches, Groups, reports, exports, and files must never cross this boundary.
-- **Program** is a reusable course template. It owns reusable Quiz Bank content and behavioral criteria.
-- **Batch** is a real delivery cohort. It owns learners, groups, enabled learning features, Gate settings, attendance, XP, results, reports, and rankings.
-- **Group** is a competition/peer-review team within one Batch.
-- All learner data, XP totals, reports, CSV exports, and leaderboards are scoped to the selected Client Organization and Batch. Data must never mix across Client Organizations or Batches.
+- **Client Organization:** Customer-data isolation boundary. Learners, Programs, Batches, Groups, reports, exports, and files never cross this boundary.
+- **Program:** Reusable course template. Owns versioned Quiz Bank questions and behavioral assessment criteria.
+- **Batch:** Real delivery cohort. Owns enrolled learners, groups, enabled activity configs, gate states, attendance sessions/records, XP transactions, results, reports, and rankings.
+- **Group:** Competition and peer-review team within a single Batch. Group names must be unique within their Batch.
+- All learner records, XP totals, reports, CSV exports, and leaderboards are strictly scoped to the selected Client Organization and Batch.
+
+---
 
 ## 4. Roles and authorization
 
 | Capability | Admin | Facilitator | Learner |
-|---|---:|---:|---:|
+|---|:---:|:---:|:---:|
 | Manage Program, Batch, Group, learning configuration | Allow | Deny | Deny |
 | View assigned Batch learner roster | Allow | Read-only | Own profile only |
 | Add/edit/delete/import Learners, Groups, or learner fields | Allow | Deny | Deny |
-| Import quizzes/assessment criteria | Allow | Deny | Deny |
+| Import quizzes / assessment criteria from CSV/XLSX | Allow | Deny | Deny |
 | Manage Quiz Bank and behavioral criteria | Allow | Deny | Deny |
-| Review Assignments and provide feedback | Allow | Allow (assigned scope) | Own submissions |
+| Review Assignments and provide written feedback | Allow | Allow (assigned scope) | Own submissions |
 | View assigned Test/Assessment results | Allow | Allow (assigned scope) | Own results |
-| Manage attendance | Allow | Allow (assigned scope) | Deny |
+| Manage attendance sessions and records | Allow | Allow (assigned scope) | Deny |
 | Open/close enabled learning gates | Allow | Allow (assigned scope) | Deny |
-| Manual XP adjustment / Rapid Group Score | Allow | Only if explicitly granted | Deny |
-| View executive reports and export CSV | Allow | Assigned scope; export policy-controlled | Deny |
+| Manual XP adjustment / Rapid Group Score | Allow | Explicit grant only | Deny |
+| View executive reports and export CSV | Allow | Assigned scope (read-only) | Deny |
 | Complete tests, assessments, peer review, assignments | Deny in normal account | Deny in normal account | Allow |
-| View Batch leaderboard | Allow | Assigned scope | Allow |
+| View Batch leaderboard & Top 3 Podium | Allow | Assigned scope | Allow |
 
-Every management, configuration, import, attendance, gate, and XP action must record the individual Admin account, timestamp, and reason where applicable.
+Every management, configuration, import, attendance, gate, and XP action records the actor user ID, timestamp, and reason where applicable in an immutable audit log.
 
-## 5. Batch configuration: feature availability and gates
+---
 
-The system separates **feature enablement** from **time-based gate control**.
+## 5. Batch configuration: feature availability, gates, and content
 
-- **Feature enablement:** Admin chooses what applies to a Batch.
-- **Gate control:** Admin chooses when an enabled activity becomes available.
+The system separates **feature enablement** from **time-based gate control**:
 
-Per Batch, Admin can enable or disable:
+- **Feature enablement:** Admin chooses which learning activities apply to a Batch. Disabled activities are hidden from Learners, generate no XP, and are excluded from KPI/chart denominators (reported as **N/A**, never zero).
+- **Gate control:** Admin controls when an enabled activity becomes accessible to Learners. A closed enabled activity is visible to learners with the status *"รอวิทยากรเปิดระบบ"*.
+
+### 5.1 Configurable activities per Batch
 - Pre-test Knowledge
 - Post-test Knowledge
 - Self-Behavior Before
 - Self-Behavior After
 - Group Peer Review
-- 0–3 Assignments
+- 0–3 Assignments (individually titled and configured)
 
-Default gates for enabled features:
+### 5.2 Default gate states for enabled features
 
-| Activity | Default |
-|---|---|
-| Pre-test Knowledge | Open |
-| Self-Behavior Before | Open |
-| Post-test Knowledge | Closed |
-| Self-Behavior After | Closed |
-| Group Peer Review | Closed |
-| Each enabled Assignment | Closed |
+| Activity | Default State | Description |
+|---|:---:|---|
+| Pre-test Knowledge | **Open** | Available upon enrollment |
+| Self-Behavior Before | **Open** | Available upon enrollment |
+| Post-test Knowledge | **Closed** | Opened by facilitator/admin during or after training |
+| Self-Behavior After | **Closed** | Opened by facilitator/admin after training |
+| Group Peer Review | **Closed** | Opened by facilitator/admin during peer session |
+| Each enabled Assignment | **Closed** | Opened by facilitator/admin per schedule |
 
-A disabled activity is not shown to Learners, does not generate XP, and is excluded from KPI/chart denominators. A closed enabled activity is visible but unavailable, with the message “รอวิทยากรเปิดระบบ”.
+### 5.3 Single bulk-save & per-batch assignment customization
+- **Bulk Save:** Admin activity controls use a single sticky **"บันทึกการเปลี่ยนแปลงทั้งหมด"** button. Admins can adjust multiple activity toggles, gate states, and assignment details before saving once atomically.
+- **Assignment Content Customization:** For each enabled Assignment (1–3), Admins can customize the **Title** and **Learner-facing Instructions** per Batch directly within activity controls.
+
+---
 
 ## 6. Admin experience
 
-### 6.1 Setup Center
-- Create/edit Program and Batch.
-- Configure Batch learning features and gates.
-- Create/manage Groups.
-- Use safe-delete behavior: prevent destructive deletion when dependent learner/results data exists; retain audit history.
-- Persistent context bar: Program → Batch selector, group/member/Batch-XP indicators, quick create actions.
+### 6.1 Setup Center & Batch lifecycle
+- **Guided Setup Order:** Program creation → Batch creation → Group creation → Learner enrollment.
+- **Inline Editors:** Program, Batch, and Group management use clean inline forms with clear feedback and auto-selection of newly created records, replacing browser prompt dialogs.
+- **Validation Rules:**
+  - Program names must be unique within a Client Organization.
+  - Group names must be unique within a Batch (enforced on create and rename).
+  - Batch schedule dates must be valid (`start_date <= end_date`).
+  - Safe delete: Prevents destructive deletion when dependent learner/results/XP data exists; retains audit history.
+  - Inactive groups can be reactivated with an explicit reactivation control.
+  - Generated Batch codes are immutable once created.
+- **Automatic Batch Lifecycle:**
+  - `DRAFT`: Initial batch setup in progress.
+  - `READY`: Automatically transitions from `DRAFT` when active groups exist, learners are enrolled, and activities are enabled.
+  - `ACTIVE`: Automatically transitions from `READY` when the first submission or attendance record is logged.
+  - `COMPLETED`: Admin marks completion with explicit confirmation; prevents duplicate completion.
+  - `ARCHIVED`: Archived for historical records.
 
 ### 6.2 Quiz Bank and assessment configuration
-- Knowledge questions use four options (A–D) and one correct answer.
-- Behavioral criteria use five leadership dimensions: Strategic Thinking, Coaching, Growth Mindset, Team Execution, and Agility.
-- Program content is reusable by its Batches.
-- When a Batch starts, its Quiz and Behavioral Criteria are locked as a Batch Snapshot.
-- Editing Program questions/criteria creates a new Version. New Batches use the latest Version; an active Batch continues using its Snapshot.
-- Before a Batch starts, Admin may edit the current Version. After it starts, content uses a new Version and existing results retain the original Question Version and answer key.
-- Questions/criteria use Soft Delete; historical records are never physically removed.
+- **Knowledge Test:** Questions use four choices (A–D) and one correct answer.
+- **Behavioral Criteria:** Covers five leadership dimensions: *Strategic Thinking, Coaching, Growth Mindset, Team Execution, Agility* (1–5 scale).
+- **Batch Content Snapshot:** When a Batch starts, its Quiz and Behavioral Criteria are frozen as an immutable Batch Snapshot. Editing Program content creates a new Version; existing active Batches continue using their Snapshot.
+- **Soft Delete:** Questions and criteria use Soft Delete; historical assessment records are never orphaned or deleted.
 
-### 6.3 Bulk Import
-Admin can download and upload approved **CSV/XLSX templates** for:
-- Learner roster and Group assignment
-- Knowledge Test questions
-- Behavioral Assessment criteria
+### 6.3 Bulk import workflows
+Admin can download approved templates and upload:
+1. **Learner roster & Group assignments** (`.csv`, `.xlsx`)
+2. **Knowledge Test questions** (`.csv`)
+3. **Behavioral Assessment criteria** (`.csv`)
 
-Import workflow:
-
+Import pipeline:
 ```
-Download template → Upload → Validate → Preview rows/errors → Explicit confirm → Commit
+Download template → Upload file → Server validation → Preview rows/errors → Explicit confirm → Atomic commit
 ```
-
-Rules:
-- No partial writes when validation has errors.
-- Validate duplicate emails, required fields, Group validity, answer structure, and Batch/Program scope.
-- Provide row-level error messages and a downloadable error report.
-- Free-form Word/PDF parsing is not an MVP data-entry path; it may become an assisted draft workflow later, but requires human review before import.
+- Atomic writes: No partial data is written if validation encounters errors.
+- Validates duplicate emails, required headers, group existence, answer structure, and scope.
+- Provides row-level error reporting and clear validation messages.
 
 ### 6.4 Learner operations and scoring
-- Manage learner roster, email, and Group assignment.
-- Mark attendance for 5 sessions.
-- Award Rapid Group Score.
-- Create a Live XP adjustment with mandatory reason.
-- Open Projector Arena: current-Batch Top 10 leaderboard.
-- CSV export for the current Batch only.
+- **Configurable Attendance Schedule:** Configured per Batch for **1 to 20 sessions** (default: 5 sessions). Each session can have an optional title. Recorded via an explicit checkbox matrix where checked means present; one save commits all changes and creates auditable XP transactions.
+- **Rapid Group Score:** +1,000 XP awarded to all members of the selected Group (capped at 5 awards per learner per Batch).
+- **Live XP Adjustment:** Signed (+/-) amount with mandatory written reason, actor ID, and timestamp.
+- **Projector Arena:** Full-screen Top 10 leaderboard with Top 3 awards podium (Gold, Silver, Bronze styling) for in-person projection.
+- **CSV Cohort Export:** Exports authorized learner data for the selected Batch using UTF-8 BOM for Thai character compatibility.
 
-### 6.5 Reports
-The Admin Reports area includes:
-- learner count
-- cohort knowledge-growth percentage
-- attendance rate
-- total Batch XP
-- Pre vs Post cohort-average knowledge chart
-- competency gap radar
-- attendance trend
-- assignment completion
-- level distribution
-- group-average XP standing
+### 6.5 Facilitator review queue
+- Displays pending and reviewed Assignment submissions filtered by Batch and Assignment.
+- Reviewers inspect learner text submissions and download attached files via secure signed URLs.
+- Review status: `NOT_REVIEWED` | `REVIEWED` | `NEEDS_REVISION`.
+- Reviewers provide written qualitative feedback directly visible on the learner dashboard.
 
-If an activity is disabled, the related metric/chart is hidden or shown as **N/A**; it is never reported as zero.
+### 6.6 Executive reports
+The Admin Reports dashboard includes:
+- Total learner count
+- Cohort knowledge-growth percentage (Pre vs Post average)
+- Attendance rate
+- Total Batch XP
+- Pre vs Post cohort-average knowledge comparison chart
+- Competency gap radar / spider chart
+- Attendance trend across configured sessions
+- Assignment completion rates
+- Level distribution
+- Group-average XP standing
+
+Disabled activities are hidden or shown as **N/A**; they are never factored in as zero.
+
+---
 
 ## 7. Learner experience
 
-### 7.1 Access and dashboard
-- Learners sign in with a registered account.
-- Dashboard shows personal level, total XP, activity status, attendance summary, personal learning growth, badges earned, and pending tasks.
-- A first-login guided tour may be shown. It must not be required to complete learning activities.
-- Learner sees only their own detailed assessment/submission data and their authorized Batch leaderboard.
+### 7.1 Access, onboarding, and dashboard
+- **Activation & Login:** Learners activate their account and set their password via a dedicated activation portal (`set-password.html`) linked to Supabase Auth invitations.
+- **Learner Dashboard:** Displays personal level badge, total approved XP, activity status cards, attendance progress, personal growth metrics, earned badges, and pending tasks.
+- **Live Context:** Live XP, group assignment, activity gates, and facilitator feedback are fetched live from Supabase.
+- **Privacy:** Learners see only their own submission details, personal scores, and the authorized Batch leaderboard.
 
 ### 7.2 Tests and assessments
-- Knowledge Test supports Pre and Post according to Batch configuration and gate state.
-- Self-Behavior uses a 1–5 scale for the five configured leadership dimensions.
-- Peer Review requires a rating and written feedback for required peers before submission.
-- A learner cannot access or submit a disabled/closed activity.
-- Knowledge Test and Self-Behavior/Peer Review allow one final submission per Learner/Batch, except Post-test: a Learner may retest while not yet passed. Post-test requires at least 80%; after passing, the activity is locked and cannot be retaken. Each attempt is retained for audit.
-- Post-test uses the same Batch Snapshot question set for every Learner, while randomizing question order only per Learner. Option order remains A–D as authored. The presented question order is stored with each attempt; question content is not randomly substituted. XP is awarded once on the first passing attempt.
-- Assignments are completion/feedback activities, not numeric-scored assessments. Facilitator status is Not Reviewed / Reviewed / Needs Revision. Assignment XP is awarded once on the first successful submission; later revisions do not award additional XP.
-- Due dates are optional per Assignment. After a due date, the Assignment is marked late; Admin may keep accepting late submissions per Assignment.
+- **Pre-test:** Completed once; awards +500 XP upon submission.
+- **Self-Behavior Before & After:** 1–5 rating across the five leadership dimensions. Completed once; awards +500 XP (Before) and +1,000 XP (After).
+- **Post-test Knowledge:**
+  - Requires **$\ge 80\%$** to pass.
+  - If a learner fails, they may retest while the Gate is open.
+  - After passing ($\ge 80\%$), the Post-test is locked and cannot be retaken.
+  - Every attempt is recorded with question presentation order, responses, score, and pass state.
+  - Question presentation order is randomized per Learner; option order remains A–D as authored.
+  - XP (+1,500 XP) is awarded once upon the first passing attempt.
+- **Group Peer Review:**
+  - Learners provide ratings and written feedback for required peers within their assigned Group.
+  - Anonymous to recipient: The reviewed peer sees ratings and feedback without reviewer names. Admin retains full reviewer identity for moderation and audit.
+  - Self-review and duplicate reviews are rejected server-side.
+  - Awards +2,000 XP once upon full submission.
 
-### 7.3 Assignments
-Each enabled Assignment can be configured independently with:
-- instructions and optional due date
-- required text response
-- required file upload
-- text + file submission
+### 7.3 Assignments & Facilitator feedback
+- Each enabled Assignment (1–3) requires:
+  - Text response only,
+  - File upload only, or
+  - Text response + file upload.
+- **File Upload Specifications:**
+  - Allowed formats: `PDF`, `DOC`, `DOCX`, `PPT`, `PPTX`, `XLS`, `XLSX`, `PNG`, `JPG`.
+  - Max file size: **20 MB per file**.
+  - Max files: **3 files per assignment**.
+  - Stored in private Supabase Storage buckets; downloaded via short-lived authorized signed URLs.
+  - Files retained for at least 1 year after Batch completion.
+- **Grading & Status:** Assignments are qualitative (not numeric grades). Status: `NOT_REVIEWED` | `REVIEWED` | `NEEDS_REVISION`.
+- **Resubmission:** Learners may revise submissions until gate closure or due date.
+- **XP Award:** +3,000 XP is awarded once upon first successful submission; later revisions do not grant duplicate XP.
 
-Assignment files are stored in private object storage. Downloads use authorized URLs and are limited to permitted Admins and the submitting Learner. Upload type/size limits, retention, malware scanning, and resubmission policy must be finalized before production.
+### 7.4 Leaderboard & Awards podium
+- **Individual Leaderboard:** Ranks learners by total approved Batch XP. Top 3 participants are highlighted on an **Awards Podium** with Gold, Silver, and Bronze distinction.
+- **Group Battle:** Ranks Groups by total Group XP.
+- **Executive Group View:** Displays average XP per Group (clearly distinguished from total Group XP).
+- **Deterministic Tie-Breaking:**
+  1. Total approved Batch XP descending.
+  2. Timestamp of reaching that XP total ascending (earlier achiever ranks higher).
+  3. Normalized display name alphabetically.
 
-### 7.4 Leaderboard
-- Individual leaderboard ranks learners by **total approved Batch XP**.
-- Group Battle displays **total Group XP**.
-- Executive reporting displays **average XP per Group**; this is a different metric and must be labeled clearly.
-- Leaderboard order: total approved Batch XP descending; if tied, the Learner who reached that total earlier ranks higher; if timestamps are identical, sort by normalized display name alphabetically. The tie-break timestamp and XP transactions must be retained for audit.
-- Badge/archetype display is cosmetic unless a future approved rule assigns value.
+---
 
 ## 8. Gamification and XP rules
 
 ### 8.1 Principles
-- XP rewards participation and application; correctness remains a learning outcome, not a mechanism to inflate game points.
-- A principal activity awards XP at most once per Learner per Batch.
-- Attendance and Rapid Group Score are exceptions under their limits.
-- Every XP change is a traceable transaction with source, amount, Batch, Learner, actor/system, timestamp, and reason/reference.
-- Repeated requests must be idempotent: double clicks/retries cannot create duplicate XP.
+- XP rewards active participation, completion, and applied learning; test correctness remains an academic outcome and does not inflate game points.
+- Core activities award XP at most once per Learner per Batch.
+- Every XP change is an immutable transaction record containing source, amount, Batch, Learner, actor ID/system, timestamp, and idempotency key.
+- Double clicks and retries are idempotent and cannot create duplicate XP awards.
 
 ### 8.2 Approved XP schedule
 
-| Activity | XP | Limit |
+| Activity | XP Amount | Rules & Limits |
 |---|---:|---|
-| Pre-test Knowledge | +500 | Once per Learner/Batch |
-| Self-Behavior Before | +500 | Once per Learner/Batch |
-| Attendance | +2,000 | Per attended session; 5 sessions |
-| Rapid Group Score | +1,000 | Maximum 5 awards per Learner/Batch |
-| Post-test Knowledge | +1,500 | Once per Learner/Batch; completion-based |
-| Self-Behavior After | +1,000 | Once per Learner/Batch |
-| Peer Review | +2,000 | Once per Learner/Batch |
-| Assignment #1–#3 | +3,000 each | Once per enabled Assignment/Learner/Batch |
-| Live XP Adjustment | +/- specified amount | Admin only; reason required |
+| **Pre-test Knowledge** | +500 XP | Once per Learner / Batch on submission |
+| **Self-Behavior Before** | +500 XP | Once per Learner / Batch on submission |
+| **Attendance** | +2,000 XP / session | Awarded per attended session across configured sessions (1–20 sessions, default 5) |
+| **Rapid Group Score** | +1,000 XP / award | Maximum 5 awards per Learner / Batch |
+| **Post-test Knowledge** | +1,500 XP | Once per Learner / Batch upon achieving $\ge 80\%$ |
+| **Self-Behavior After** | +1,000 XP | Once per Learner / Batch on submission |
+| **Group Peer Review** | +2,000 XP | Once per Learner / Batch upon completing required reviews |
+| **Assignments (#1–#3)** | +3,000 XP / assignment | Once per enabled Assignment on first submission; revisions grant +0 XP |
+| **Live XP Adjustment** | $\pm$ Specified amount | Admin only; mandatory reason; creates compensating transaction |
 
-Level thresholds retained for the MVP:
-- Level 1: Emerging Leader
-- Level 2: Strategic Visionary — 15,000 XP
-- Level 3: Strategic Leader — 30,000 XP
-- Level 4: Executive Master — 50,000+ XP
+### 8.3 Level thresholds
 
-### 8.3 Deferred gamification
-Loot Chests, XP-bearing Badges, and automatic bonus awards are **not part of the approved MVP XP schedule**. They should remain visual/cosmetic or be disabled until their rules, Admin controls, transaction sources, and anti-abuse limits are approved.
+| Level | Title | Required XP |
+|---|---|---:|
+| **Level 1** | Emerging Leader | 0 XP |
+| **Level 2** | Strategic Visionary | 15,000 XP |
+| **Level 3** | Strategic Leader | 30,000 XP |
+| **Level 4** | Executive Master | 50,000+ XP |
 
-## 9. Reporting, privacy, and learning outcomes
+*Note:* Levels and badges are cosmetic milestones. Loot boxes, XP-bearing badges, and automated bonus multipliers remain excluded from MVP.
 
-- Executive Pre/Post reporting uses the **cohort average of the selected Batch**; it does not expose individual learner comparisons. For Post-test, each Learner contributes the score from their first passing Attempt (≥80%).
-- Learners can see their own Pre/Post and self-assessment growth immediately after submission. Automated results and pass/fail status are shown immediately; Post-test still locks after passing.
-- Assignment submission status is shown immediately. Facilitator Feedback appears when the review is completed.
-- Peer Review submission/receipt and the Learner’s own submitted responses are shown immediately, but reviewer identity remains anonymous.
-- Peer Review is anonymous to the recipient: the reviewed Learner does not see the reviewer’s name. Admin can see reviewer identity for audit and complaint handling.
-- A Learner cannot review themselves or submit duplicate reviews for the same peer/Batch. Admin can hide/remove inappropriate comments, while preserving the moderation audit record.
-- CSV export includes only fields authorized for Admin use, with UTF-8 BOM for Thai text.
-- Report formulas use only enabled activities and must retain data-version references for reproducibility.
+---
 
-## 10. Production architecture and non-functional requirements
+## 9. Reporting, privacy, and data governance
 
-### Required before pilot
-- **Supabase PostgreSQL** is the managed relational database. Supabase Auth handles account identity, private Supabase Storage holds Assignment files, and Row-Level Security enforces Client Organization/Program/Batch scope.
-- A server-side service layer/Edge Functions owns XP awards, imports, file authorization, audit writes, and other trusted mutations; clients do not write XP or bypass authorization directly.
-- Backend API enforcing authentication, authorization, Batch scope, gates, validation, and idempotency server-side.
-- Private object storage for Assignment files.
-- Audit Log is immutable and records authentication, role changes, Program/Batch/Group edits, imports, Gate changes, Attendance, XP changes, Assignment review, Peer moderation, and file access/deletion. Each event records actor, timestamp, Client Organization/Batch, target, before/after values, and reason where applicable. Admins may read within scope but cannot edit/delete logs.
-- Retain Audit Log for at least 2 years after Batch completion. Use Soft Delete for Learner, Group, Quiz, Assignment, and files; never hard-delete records referenced by results or XP transactions.
-- Database backup is daily, with Daily retention 30 days and Monthly retention 12 months. Test restore at least quarterly. MVP target: RPO ≤24 hours and RTO ≤8 hours.
-- Before retention expiry, support authorized Batch export as evidence; permanent deletion requires approval and is recorded.
-- Input validation, rate limiting, secure secrets, and security review.
-- Responsive UX for mobile, tablet, desktop, and projector.
-- Loading, empty, error, and retry states.
-- Accessibility baseline: keyboard operation, readable contrast, form errors, and Thai/English text support.
+- **Cohort-Level Executive Reporting:** Executive Pre/Post and growth reports display cohort averages for the selected Batch; individual learner comparison rows are not exposed in executive views. Post-test calculations use each Learner's first passing attempt ($\ge 80\%$).
+- **Immediate Learner Feedback:** Learners see automated test results, pass/fail status, and submission receipts immediately. Facilitator feedback appears once reviewed.
+- **Peer Review Anonymity:** Reviewee sees ratings and qualitative comments anonymously. Full reviewer identity is stored privately for Admin moderation and audit.
+- **Audit Log & Soft Delete:**
+  - Audit log is append-only and immutable. Retained for at least 2 years following Batch completion.
+  - Soft Delete (`deleted_at`) is enforced on Learners, Groups, Questions, Assignments, and Files; physical hard delete is prohibited for records linked to submissions, results, or XP transactions.
+- **Database Backup & Recovery:** Daily backups retained for 30 days; monthly backups retained for 12 months. MVP targets: RPO $\le 24$ hours, RTO $\le 8$ hours.
+- **CSV Exports:** UTF-8 BOM encoding for complete Thai text compatibility.
 
-### Recommended before wider rollout
-- In-app/email notifications for gate opening, upcoming/overdue assignments, and Admin import failures.
-- Admin search/filter and saved views for large cohorts.
-- Dashboard data-quality alerts: missing Group, duplicate roster, incomplete attendance, unconfigured gate.
-- Monitoring, error alerting, and usage metrics.
-- UAT with one representative pilot Batch and documented sign-off.
+---
 
-### Future candidates
-- Delegated self-service administration for client organizations
-- expanded Facilitator permissions
-- Corporate SSO and automated provisioning
-- AI-assisted import drafting from Word/PDF with compulsory Admin review
-- Rubrics, scoring, and written feedback on Assignments
-- Certificates, approval workflows, and HR/LMS integrations
-- Native mobile app, push notifications, and offline attendance capture
-- Advanced analytics, benchmark cohorts, and scheduled executive reports
+## 10. Production architecture and technical implementation
 
-## 11. Open decisions before implementation
+### Implemented stack on `main`
+- **Database:** Supabase PostgreSQL with versioned SQL migrations (`0001_initial_schema.sql` through `0004_automatic_batch_lifecycle.sql`).
+- **Authentication:** Supabase Auth for Admin, Facilitator, and Learner accounts. Learner password setup handled via `set-password.html`.
+- **Authorization:** PostgreSQL Row-Level Security (RLS) enforcing Client Organization, Program, and Batch data isolation.
+- **Serverless API Layer (Supabase Edge Functions):**
+  - `assignment-submit`: Secure submission of assignment text and files.
+  - `assignment-review`: Facilitator review queue, status updates, and feedback.
+  - `attendance-management`: Configurable attendance recording and XP synchronization.
+  - `batch-activity-admin`: Bulk save of activity states, gates, and assignment titles/instructions.
+  - `cohort-export-report`: UTF-8 BOM CSV export for batch reporting.
+  - `group-management`: Group creation, inline rename, duplicate validation, and reactivation.
+  - `import-quiz-bank`: Validation, preview, and import of quiz questions.
+  - `import-roster`: Validation, preview, and import of learner rosters.
+  - `post-test`: Secure Post-test evaluation, randomized question presentation, passing threshold validation, and XP awarding.
+  - `roster-management`: Learner enrollment and profile operations.
+  - `self-assessment`: Self-behavior assessment submissions.
+  - `self-assessment-report`: Cohort and individual radar/spider chart aggregation.
+  - `setup-management`: Program/Batch lifecycle, date validation, and inline editing.
+  - `xp-management`: Auditable, idempotent XP transaction logging and Rapid Group Score.
+- **File Storage:** Private Supabase Storage bucket (`assignment-files`) with short-lived signed URLs.
+- **Web Portals:** Separate Admin Portal (`index.html` / `Leadership_quest_Admin_Enhanced.html`) and Learner Portal (`leadership_quest_User.html`) hosted with GitHub Pages compatibility.
 
-| Decision | Why it matters |
-|---|---|
-| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Score-release display policy for tests and assessments | Defines when feedback/results become visible |
-| Leaderboard tie-breaking rule | Makes rankings deterministic |
-| Whether Levels/Badges are visual only or carry future privileges | Prevents hidden gamification rules |
+---
 
-## 12. Delivery sequence
+## 11. Resolved architectural and product decisions
 
-1. **Phase 1 — Scope & acceptance:** resolve the open decisions above and approve this specification.
-2. **Phase 2 — Data architecture:** ERD, schema, migration, seed data, storage plan, and import templates.
-3. **Phase 3 — Authentication & authorization:** individual Admin accounts, Learner access, RBAC, audit events.
-4. **Phase 4 — Backend APIs:** hierarchical data, activity configuration/gates, transactions, imports, reporting.
-5. **Phase 5 — Frontend integration:** replace prototype storage/login with APIs while retaining approved UX.
-6. **Phase 6 — QA/UAT:** security, data isolation, XP/report formulas, imports, file uploads, responsive flow.
-7. **Phase 7 — Pilot launch:** staging, monitoring, backups, support runbook, and controlled first Batch.
+All prior open decisions have been formally approved and verified in the codebase on `main`:
+
+| Area | Approved Decision | Verification on `main` |
+|---|---|---|
+| **Score & Feedback Release** | Immediate display of automated results/receipts to Learners. Assignment facilitator feedback displayed after review. Peer Review remains anonymous to recipient. | Implemented in `post-test`, `assignment-review`, and learner UI |
+| **Leaderboard Tie-Breaking** | Tie-break order: (1) Total approved XP desc, (2) Timestamp of reaching total asc, (3) Normalized name alphabetically. Top 3 on Awards Podium. | Implemented in PR #5 and leaderboard renderers |
+| **Levels & Badges** | Levels 1–4 with thresholds at 0 / 15k / 30k / 50k XP are cosmetic. No unapproved XP-bearing badges. | Implemented in learner dashboard & XP engine |
+| **Assignment File Policy** | PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX, PNG, JPG; max 20 MB/file; max 3 files/assignment; private Supabase Storage with signed URLs; 1-year retention. | Enforced in `assignment-submit` & schema constraints |
+| **Attendance Configuration** | Configurable between 1 and 20 sessions per Batch (default 5). Checkbox matrix with single explicit save. | Schema migration `0003` & `attendance-management` |
+| **Batch Lifecycle** | Automatic transition: `DRAFT` → `READY` → `ACTIVE`. Immutable batch codes. Single-save activity controls. | Schema migration `0004` & `batch-activity-admin` |
+| **Post-test Rules** | Pass threshold $\ge 80\%$. Failed learners can retest while gate open; passing locks test. Random question order per learner; A–D option order unchanged. | Enforced in `post-test` Edge Function |
+| **Data Retention & Audit** | Immutable Audit Log retained 2 years. Soft Delete for all referenced records. Daily backups 30d, monthly 12m. | Implemented in RLS, schema triggers, and audit tables |
+
+---
+
+## 12. Delivery sequence and status
+
+1. **Phase 1 — Scope & Acceptance:** Approved & Baseline locked.
+2. **Phase 2 — Data Architecture & Migrations:** Complete (`0001_initial_schema.sql` through `0004_automatic_batch_lifecycle.sql`).
+3. **Phase 3 — Authentication & Authorization:** Complete (Supabase Auth, invite password flow, RLS policies).
+4. **Phase 4 — Backend APIs & Edge Functions:** Complete (14 Supabase Edge Functions deployed for core workflows).
+5. **Phase 5 — Frontend Integration:** Complete on `main` (Admin & Learner portals connected to Supabase backend).
+6. **Phase 6 — Staging QA & Security Verification:** Active.
+7. **Phase 7 — Pilot Batch Launch:** Scheduled upon staging sign-off.
