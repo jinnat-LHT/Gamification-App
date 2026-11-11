@@ -325,3 +325,64 @@ All prior open decisions have been formally approved and verified in the codebas
 5. **Phase 5 — Frontend Integration:** Complete on `main` (Admin & Learner portals connected to Supabase backend).
 6. **Phase 6 — Staging QA & Security Verification:** Active.
 7. **Phase 7 — Pilot Batch Launch:** Scheduled upon staging sign-off.
+
+---
+
+## 13. LHT Ecosystem Integration Architecture
+
+Leadership Quest operates within the broader **Learning Hub Thailand (LHT) Training & AI Ecosystem**, connecting with **Training Ops (`lht-training-os`)** as the Master Data Authority and **AI Leadership Companion ("Linn" / `Ai-Leadership-Companion`)** as the primary learner engagement front-door.
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                   Training Ops (lht-training-os)                      │
+│                  Master Data & Business Lifecycle                      │
+│   - Jobs (Clients, Courses, Dates)  - Billing / Invoicing / Payout     │
+│   - Learner Rosters & HR Contacts    - Survey / Evaluations (LS/HS)    │
+└──────────────┬──────────────────────────────────────────┬──────────────┘
+               │ (1) Master Data Sync                     │ (3) Batch & Roster Provisioning
+               │ (SSO & Hand-off)                         │ (XP / Gate Completion)
+               ▼                                          ▼
+┌───────────────────────────────┐          ┌─────────────────────────────┐
+│    Ai-Leadership-Companion    │          │      Gamification App       │
+│       (Linn: LINE Bot)        │          │     (Leadership Quest)      │
+│ - 30-Day Follow-up & Nudges   │◄────────►│ - In-Class Attendance / Gate│
+│ - Reflection & Learning RAG   │ (2) Data │ - Quests, XP & Leaderboard  │
+│ - Assignments (PDF/LIFF)      │  Exchange│ - Facilitator Review Queue  │
+└───────────────────────────────┘          └─────────────────────────────┘
+```
+
+### 13.1 Tri-App Roles & Data Ownership
+
+| System | Role | Authority & Data Ownership |
+|---|---|---|
+| **Training Ops (`lht-training-os`)** | **Master Data Authority (Source of Truth)** | Owns Clients, Courses, Training Jobs (`job_ref`), Trainer assignments, Billing/Payout, and Surveys/Certifications. |
+| **Gamification App (`Gamification-App`)** | **In-Class Learning & Quest Engine** | Owns Session Attendance matrices, Quest & Level rules, XP Ledger, Leaderboard/Podium calculations, and Facilitator Review Queue. |
+| **AI Leadership Companion (`Ai-Leadership-Companion`)** | **User Front Door & 30-Day Coach** | Owns Dedicated LINE OA, LIFF Onboarding, Long-term AI memory (Linn), Proactive Nudge schedules, and Rich Menu navigation. |
+
+### 13.2 Global Entity Mapping & Key Conventions
+
+- **Job / Batch Reference:** `job_ref` (UUID) from Training Ops is the immutable master key, mapped as `batch_code = OPS-{job_ref}` across both Gamification App and AI Companion.
+- **Learner Identity:** Unified via `line_user_id` and corporate email. Gamification accounts can be auto-provisioned or mapped directly from the roster sync.
+- **Shared Secret Pattern:** Cross-system server-to-server calls authenticate using HMAC-SHA256 with timing-safe comparisons guarded by shared secret headers (matching `x-ops-sync-secret` convention).
+
+### 13.3 End-User Touchpoints & Rich Menu Hub
+
+Learners interact primarily through the dedicated LINE OA ("Linn"), which acts as the unified launcher for all modules via a standardized 6-button Rich Menu (English-first with Thai subtitles):
+
+1. 🏆 **Quest & Ranking** *(ภารกิจและอันดับ)*: Deep-links via LIFF to Leadership Quest Learner Portal (Attendance check-in, Group/Individual XP, Leaderboard). General learners without active quest batches receive a standard course progress summary.
+2. 💬 **Ask Linn** *(คุยกับลินน์)*: Interactive AI coaching session on LINE, extracting reflective commitments and crediting micro-quest XP back to the Gamification ledger.
+3. 📝 **Assignment** *(ส่งงาน / การบ้าน)*: Opens assignment submission form (text / PDF $\le 10$ MB), routed to the Facilitator Review Queue.
+4. 📚 **Handout** *(เอกสารประกอบการเรียน)*: Downloads course handouts, slides, and reference infographics.
+5. 🎯 **Assess & Cert** *(ทดสอบ ประเมิน ใบเซอร์)*: Unified hub for Pre/Post-tests, Behavioral/Competency Assessments (e.g., BCI), Learner Satisfaction Survey (LS-01), and e-Certificate download upon passing all gates.
+6. 🆘 **Contact Admin** *(ติดต่อทีมงาน)*: Switches conversation to `HUMAN` mode and triggers facilitator notifications with `#CODE` in LHT admin LINE group.
+
+### 13.4 Inter-System Integration Workflows
+
+1. **Inbound Batch & Roster Provisioning:**
+   - When Training Ops confirms an active Job, it triggers a webhook payload to create a corresponding `Batch` with status `READY`, pre-configuring `attendance_total_sessions` (1–20) and importing participants.
+2. **Seamless LIFF Authentication (SSO):**
+   - When learners launch Leadership Quest from LINE OA, their verified LINE ID or signed token automatically resolves their Batch and Group membership without requiring manual password entry.
+3. **Outbound Gate Completion & Certification Callback:**
+   - When a learner completes all mandatory Gates (Attendance $\ge$ threshold, Assignment approved, Post-test $\ge 80\%$), Leadership Quest notifies Training Ops to release e-Certificate and unlock Survey LS-01.
+4. **AI Companion Reflection XP Bridge:**
+   - Validated reflection completions and proactive follow-up commitments captured by Linn generate XP credit transactions directly in `user_xp_ledger`.
